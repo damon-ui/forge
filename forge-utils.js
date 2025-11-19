@@ -17,7 +17,7 @@
  * 8. Data Migration
  */
 
-const TRNTUtils = (function() {
+const ForgeUtils = (function() {
   'use strict';
 
   // ============================================
@@ -1395,8 +1395,8 @@ const TRNTUtils = (function() {
 })();
 
 // Make available globally
-window.TRNTUtils = TRNTUtils;
+window.ForgeUtils = ForgeUtils;
 
 // Console message
-console.log(`%c🚢 TRNT Utils v${TRNTUtils.version} Loaded`, 
+console.log(`%c🚢 Forge Utils v${ForgeUtils.version} Loaded`, 
   'color: #3b82f6; font-weight: bold; font-size: 14px;');
