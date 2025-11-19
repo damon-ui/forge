@@ -1,0 +1,382 @@
+{
+  "metadata": {
+    "tripTitle": "Rocky Mountaineer & Canadian Rockies Adventure",
+    "clientName": "Michael and Sarah Anderson",
+    "startDate": "2026-08-15",
+    "endDate": "2026-08-23",
+    "guests": 2,
+    "createdDate": "2025-11-18T17:00:00Z",
+    "lastModified": "2025-11-18T17:00:00Z",
+    "version": "3.0.0",
+    "tripType": "train_journey",
+    "destination": "Canadian Rockies"
+  },
+  
+  "overview": {
+    "summary": "Experience the majesty of the Canadian Rockies aboard the world-renowned Rocky Mountaineer, followed by luxury stays in Banff and Jasper. This 9-day journey combines iconic train travel with world-class mountain lodges and unforgettable wildlife encounters.",
+    "vendor": "Rocky Mountaineer",
+    "tripType": "luxury_train",
+    "highlights": [
+      "GoldLeaf Service on Rocky Mountaineer",
+      "Fairmont Banff Springs Castle experience",
+      "Private wildlife tour in Jasper",
+      "Helicopter glacier landing",
+      "Farm-to-table dining experiences"
+    ],
+    "notes": "Client celebrating 25th anniversary - arrange champagne on train"
+  },
+  
+  "pricing": {
+    "flightsTotal": 1840,
+    "additionalCosts": 9685,
+    "grandTotal": 11525,
+    "perPerson": 5762,
+    "currency": "USD",
+    "deposit": 2305,
+    "finalPaymentDue": "2026-06-15",
+    "breakdown": {
+      "notes": "Train package includes all meals during journey, hotel overnight in Kamloops, and gratuities"
+    }
+  },
+  
+  "flights": [
+    {
+      "id": "flight-001",
+      "type": "outbound",
+      "airline": "Air Canada",
+      "flightNumber": "AC108",
+      "departure": {
+        "airport": "JFK",
+        "city": "New York",
+        "date": "2026-08-15",
+        "time": "08:30"
+      },
+      "arrival": {
+        "airport": "YVR",
+        "city": "Vancouver",
+        "date": "2026-08-15",
+        "time": "11:45"
+      },
+      "cabin": "Business",
+      "duration": "6h 15m",
+      "price": 920,
+      "pricePerPerson": 920,
+      "baggage": "2 checked bags, 70 lbs each"
+    },
+    {
+      "id": "flight-002",
+      "type": "return",
+      "airline": "Air Canada",
+      "flightNumber": "AC119",
+      "departure": {
+        "airport": "YYC",
+        "city": "Calgary",
+        "date": "2026-08-23",
+        "time": "14:30"
+      },
+      "arrival": {
+        "airport": "JFK",
+        "city": "New York",
+        "date": "2026-08-23",
+        "time": "22:15"
+      },
+      "cabin": "Business",
+      "duration": "5h 45m",
+      "price": 920,
+      "pricePerPerson": 920,
+      "baggage": "2 checked bags, 70 lbs each"
+    }
+  ],
+  
+  "hotels": [
+    {
+      "id": "hotel-001",
+      "name": "Fairmont Hotel Vancouver",
+      "location": "Vancouver, BC",
+      "address": "900 West Georgia Street, Vancouver, BC V6C 2W6",
+      "checkIn": "2026-08-15",
+      "checkOut": "2026-08-16",
+      "nights": 1,
+      "roomType": "Fairmont Gold Room",
+      "roomDescription": "Upgraded room with exclusive lounge access",
+      "bedConfiguration": "King",
+      "view": "City View",
+      "amenities": [
+        "Gold Lounge access with breakfast",
+        "Evening hors d'oeuvres and cocktails",
+        "Free WiFi",
+        "Fitness center",
+        "Concierge service"
+      ],
+      "mealPlan": "Breakfast included in Gold Lounge",
+      "price": 425,
+      "pricePerNight": 425,
+      "starRating": 5,
+      "category": "pre-trip",
+      "bookingReference": "FHV-2026-891234",
+      "notes": "Pre-train night, close to Rocky Mountaineer station"
+    },
+    {
+      "id": "hotel-002",
+      "name": "Fairmont Banff Springs",
+      "location": "Banff, Alberta",
+      "address": "405 Spray Avenue, Banff, AB T1L 1J4",
+      "checkIn": "2026-08-18",
+      "checkOut": "2026-08-21",
+      "nights": 3,
+      "roomType": "Deluxe Mountain View Room",
+      "roomDescription": "Castle room with stunning mountain vistas",
+      "bedConfiguration": "King",
+      "view": "Mountain View",
+      "amenities": [
+        "European-style spa access",
+        "27-hole golf course",
+        "Multiple dining venues",
+        "Free WiFi",
+        "Bell services",
+        "Heated outdoor pool"
+      ],
+      "mealPlan": "Room Only",
+      "price": 1875,
+      "pricePerNight": 625,
+      "starRating": 5,
+      "category": "main",
+      "bookingReference": "FBS-2026-447821",
+      "specialRequests": "Anniversary - please arrange rose petals and champagne in room on arrival",
+      "notes": "The Castle in the Rockies - iconic property"
+    },
+    {
+      "id": "hotel-003",
+      "name": "Fairmont Jasper Park Lodge",
+      "location": "Jasper, Alberta",
+      "address": "1 Old Lodge Road, Jasper, AB T0E 1E0",
+      "checkIn": "2026-08-21",
+      "checkOut": "2026-08-23",
+      "nights": 2,
+      "roomType": "Lakeside Cabin",
+      "roomDescription": "Private cabin with fireplace overlooking Lac Beauvert",
+      "bedConfiguration": "King",
+      "view": "Lake View",
+      "amenities": [
+        "Private cabin setting",
+        "Wood-burning fireplace",
+        "Lakeside location",
+        "Free WiFi",
+        "Outdoor hot tub access",
+        "Complimentary bikes"
+      ],
+      "mealPlan": "Room Only",
+      "price": 1350,
+      "pricePerNight": 675,
+      "starRating": 5,
+      "category": "post-trip",
+      "bookingReference": "FJPL-2026-338912",
+      "notes": "Rustic luxury on Lac Beauvert"
+    }
+  ],
+  
+  "cruise": null,
+  "preTrip": null,
+  "postTrip": null,
+  
+  "components": [
+    {
+      "id": "comp-001",
+      "type": "train",
+      "category": "main",
+      "order": 1,
+      "data": {
+        "trainLine": "Rocky Mountaineer",
+        "routeName": "First Passage to the West",
+        "departure": {
+          "station": "Vancouver",
+          "city": "Vancouver, BC",
+          "date": "2026-08-16",
+          "time": "07:30"
+        },
+        "arrival": {
+          "station": "Banff",
+          "city": "Banff, AB",
+          "date": "2026-08-18",
+          "time": "17:30"
+        },
+        "days": 2,
+        "serviceLevel": "GoldLeaf Service",
+        "cabinType": "Upper-level glass dome coach",
+        "description": "Two-day journey through the Canadian Rockies with overnight in Kamloops. GoldLeaf Service features panoramic views from glass-domed coach, gourmet meals in exclusive dining room, and complimentary alcoholic beverages.",
+        "mealsIncluded": true,
+        "mealDetails": "All breakfasts, lunches, and gourmet snacks. Alcoholic and non-alcoholic beverages included.",
+        "overnightStop": {
+          "location": "Kamloops, BC",
+          "hotel": "Included in package",
+          "date": "2026-08-17"
+        },
+        "highlights": [
+          "Fraser Canyon and Hell's Gate",
+          "Spiral Tunnels",
+          "Kicking Horse Pass",
+          "Continental Divide crossing",
+          "Wildlife viewing opportunities"
+        ],
+        "inclusions": [
+          "Two full days of train travel",
+          "Hotel in Kamloops with breakfast",
+          "All meals on train",
+          "Unlimited beverages",
+          "Baggage handling",
+          "Gratuities for train staff",
+          "Custom souvenir"
+        ],
+        "price": 4990,
+        "pricePerPerson": 2495
+      },
+      "externalLink": "https://www.rockymountaineer.com",
+      "presentationOnly": false,
+      "notes": "Booked for GoldLeaf - best experience. Anniversary couple."
+    },
+    {
+      "id": "comp-002",
+      "type": "activity",
+      "category": "optional",
+      "order": 2,
+      "data": {
+        "name": "Banff Gondola & Mountain Top Dining",
+        "provider": "Banff Gondola",
+        "location": "Sulphur Mountain, Banff",
+        "date": "2026-08-19",
+        "time": "18:30",
+        "duration": "3 hours",
+        "description": "Private gondola ride to summit of Sulphur Mountain for sunset dinner at Sky Bistro. Includes priority seating, three-course meal, and champagne.",
+        "included": [
+          "Private gondola car",
+          "Priority dining reservation",
+          "Three-course dinner",
+          "Champagne toast",
+          "Summit boardwalk access"
+        ],
+        "maxParticipants": 2,
+        "price": 380,
+        "pricePerPerson": 190,
+        "bookingReference": "GONDOLA-891234"
+      },
+      "notes": "Perfect for anniversary sunset experience"
+    },
+    {
+      "id": "comp-003",
+      "type": "activity",
+      "category": "optional",
+      "order": 3,
+      "data": {
+        "name": "Private Glacier Helicopter Tour",
+        "provider": "Alpine Helicopters",
+        "location": "Canmore Heliport",
+        "date": "2026-08-20",
+        "time": "09:00",
+        "duration": "2 hours",
+        "description": "Private helicopter flight over glaciers and mountain peaks with alpine landing. Champagne toast on the glacier, photo opportunities, and interpretation from experienced pilot.",
+        "included": [
+          "Private helicopter (just the two of you)",
+          "Glacier landing (20 minutes on ice)",
+          "Champagne toast",
+          "Professional photos",
+          "All safety equipment"
+        ],
+        "maxParticipants": 2,
+        "price": 1680,
+        "pricePerPerson": 840,
+        "bookingReference": "ALPINE-HH-2026-4421",
+        "weatherDependent": true
+      },
+      "notes": "Ultimate bucket list experience. Weather permitting, backup date available."
+    },
+    {
+      "id": "comp-004",
+      "type": "activity",
+      "category": "optional",
+      "order": 4,
+      "data": {
+        "name": "Private Wildlife Safari in Jasper",
+        "provider": "Jasper Wildlife Tours",
+        "location": "Jasper National Park",
+        "date": "2026-08-22",
+        "time": "06:00",
+        "duration": "4 hours",
+        "description": "Early morning private wildlife tour with expert naturalist guide. Target species include elk, bighorn sheep, mountain goats, black bears, and potentially grizzly bears. Small group vehicle ensures best viewing and photography opportunities.",
+        "included": [
+          "Private guide and vehicle",
+          "Binoculars and spotting scope",
+          "Wildlife field guide",
+          "Gourmet picnic breakfast",
+          "Hot beverages"
+        ],
+        "maxParticipants": 4,
+        "price": 560,
+        "pricePerPerson": 280,
+        "bookingReference": "JWT-PRIV-8834"
+      },
+      "notes": "Best time for wildlife viewing. Guide is former park naturalist."
+    },
+    {
+      "id": "comp-005",
+      "type": "transfer",
+      "category": "main",
+      "order": 5,
+      "data": {
+        "transferType": "private_car",
+        "from": "Fairmont Banff Springs",
+        "to": "Fairmont Jasper Park Lodge",
+        "route": "Icefields Parkway",
+        "date": "2026-08-21",
+        "time": "10:00",
+        "vehicleType": "Luxury SUV with professional driver-guide",
+        "passengers": 2,
+        "luggage": "4 large bags",
+        "duration": "4-5 hours with stops",
+        "description": "Private transfer along the stunning Icefields Parkway with stops at Peyto Lake, Columbia Icefield, and Athabasca Falls. Driver provides interpretation and photography stops.",
+        "stops": [
+          "Peyto Lake viewpoint",
+          "Columbia Icefield Discovery Centre",
+          "Athabasca Falls"
+        ],
+        "price": 485,
+        "driverName": "TBD 60 days prior",
+        "driverPhone": "TBD"
+      },
+      "externalLink": null,
+      "notes": "One of the world's most scenic drives - build in time for stops"
+    },
+    {
+      "id": "comp-006",
+      "type": "transfer",
+      "category": "main",
+      "order": 6,
+      "data": {
+        "transferType": "private_car",
+        "from": "Fairmont Jasper Park Lodge",
+        "to": "Calgary Airport (YYC)",
+        "date": "2026-08-23",
+        "time": "09:00",
+        "vehicleType": "Luxury sedan",
+        "passengers": 2,
+        "luggage": "4 large bags",
+        "duration": "4.5 hours",
+        "price": 515
+      },
+      "externalLink": null,
+      "notes": "Direct transfer to Calgary for return flight"
+    }
+  ],
+  
+  "displayMetadata": {
+    "title": "Rocky Mountaineer First Passage to the West",
+    "subtitle": "GoldLeaf Service · Aug 16-18, 2026",
+    "label": "Ultimate Canadian Rockies Experience",
+    "dates": {
+      "display": "Aug 15-23, 2026",
+      "start": "2026-08-15",
+      "end": "2026-08-23"
+    },
+    "heroImage": "https://www.rockymountaineer.com/images/hero-goldleaf.jpg",
+    "emoji": "\\u{1F682}"
+  }
+}
