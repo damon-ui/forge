@@ -1,10 +1,10 @@
 /**
- * TRNT Travel Tools - Unified Utilities Library
+ * FORGE - JavaScript Utility Library
  * Version: 3.0.0
- * Date: November 18, 2025
+ * Date: November 19, 2025
  * 
- * This library provides standardized utilities for all TRNT tools.
- * Include this file in ALL tools before any tool-specific JavaScript.
+ * Lightweight utility library for date formatting, price calculations, 
+ * and data validation in travel applications.
  * 
  * Categories:
  * 1. Date Formatting
@@ -24,9 +24,6 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    JSONBIN_API_KEY: '$2a$10$UNwYVv4XjFwr/sJ8BTilOu9TQME4u/zAa4P1TvcEuckVvdlUvd63C',
-    JSONBIN_BASE_URL: 'https://api.jsonbin.io/v3',
-    MASTER_INDEX_ID: '6914fec0ae596e708f556374',
     VERSION: '3.0.0',
     EMOJI: {
       SHIP: '\u{1F6A2}',
@@ -272,7 +269,7 @@ const ForgeUtils = (function() {
         total += Number(pricing.prePostHotelsTotal);
       }
       
-      // Add any additional costs
+      // Add additional costs
       if (pricing.additionalCosts) {
         total += Number(pricing.additionalCosts);
       }
@@ -282,14 +279,14 @@ const ForgeUtils = (function() {
 
     /**
      * Parse price string to number
-     * @param {string} priceString - Price string (e.g., "$1,234")
+     * @param {string} priceString - Price string (e.g., "$1,234.56")
      * @returns {number} Numeric value
      */
     parsePrice(priceString) {
       if (!priceString) return 0;
       
-      // Remove $ and commas, parse to number
-      const cleaned = String(priceString).replace(/[$,]/g, '');
+      // Remove currency symbols, commas, spaces
+      const cleaned = String(priceString).replace(/[$,\s]/g, '');
       const num = parseFloat(cleaned);
       
       return isNaN(num) ? 0 : num;
@@ -297,266 +294,165 @@ const ForgeUtils = (function() {
   };
 
   // ============================================
-  // 3. METADATA GENERATION
+  // 3. METADATA UTILITIES
   // ============================================
   const MetadataUtils = {
     /**
-     * Extract client last name
-     * @param {string} clientName - Full client name
-     * @returns {string} Last name
+     * Extract metadata from trip data
+     * @param {Object} tripData - Complete trip data object
+     * @returns {Object} Extracted metadata
      */
-    extractClientLastName(clientName) {
-      if (!clientName) return '';
+    extractMetadata(tripData) {
+      if (!tripData) return {};
       
-      // Handle "First and First Last" format
-      const parts = clientName.trim().split(/\s+/);
-      return parts[parts.length - 1] || '';
-    },
-
-    /**
-     * Generate metadata object for new trip option
-     * @param {Object} data - Trip data
-     * @returns {Object} Complete metadata object
-     */
-    generateMetadata(data) {
-      const now = DateUtils.getCurrentTimestamp();
+      const metadata = tripData.metadata || {};
+      const overview = tripData.overview || {};
+      const pricing = tripData.pricing || {};
       
       return {
-        tripTitle: data.tripTitle || '',
-        clientName: data.clientName || '',
-        startDate: data.startDate || '',
-        endDate: data.endDate || '',
-        guests: data.guests || 2,
-        createdDate: now,
-        lastModified: now,
-        version: CONFIG.VERSION,
-        tripType: data.tripType || '',
-        destination: data.destination || ''
+        tripTitle: metadata.tripTitle || overview.tripTitle || '',
+        clientName: metadata.clientName || '',
+        startDate: metadata.startDate || overview.startDate || '',
+        endDate: metadata.endDate || overview.endDate || '',
+        guests: metadata.guests || overview.guests || 2,
+        tripType: metadata.tripType || overview.tripType || '',
+        destination: metadata.destination || overview.destination || '',
+        grandTotal: pricing.grandTotal || PriceUtils.calculateGrandTotal(pricing),
+        perPerson: pricing.perPerson || PriceUtils.calculatePricePerPerson(
+          pricing.grandTotal, 
+          metadata.guests || 2
+        ),
+        createdDate: metadata.createdDate || DateUtils.getCurrentTimestamp(),
+        lastModified: metadata.lastModified || DateUtils.getCurrentTimestamp(),
+        version: metadata.version || CONFIG.VERSION
       };
     },
 
     /**
-     * Generate display metadata for comparison tool
-     * @param {Object} data - Trip data
-     * @returns {Object} Display metadata
+     * Generate display metadata for library cards
+     * @param {Object} tripData - Trip data
+     * @returns {Object} Display-ready metadata
      */
-    generateDisplayMetadata(data) {
+    generateDisplayMetadata(tripData) {
+      const metadata = this.extractMetadata(tripData);
+      
       return {
-        title: this.generateTitle(data),
-        subtitle: this.generateSubtitle(data),
-        label: '', // Will be set by label generation
-        dates: {
-          display: DateUtils.formatDateRange(data.metadata?.startDate, data.metadata?.endDate),
-          start: data.metadata?.startDate || '',
-          end: data.metadata?.endDate || ''
-        }
+        title: metadata.tripTitle,
+        subtitle: this.generateSubtitle(metadata),
+        dateRange: DateUtils.formatDateRange(metadata.startDate, metadata.endDate),
+        priceFormatted: PriceUtils.formatPrice(metadata.grandTotal),
+        pricePerPersonFormatted: PriceUtils.formatPrice(metadata.perPerson),
+        nights: DateUtils.calculateNights(metadata.startDate, metadata.endDate),
+        guests: metadata.guests,
+        year: DateUtils.extractYear(metadata.startDate),
+        tripType: metadata.tripType,
+        destination: metadata.destination
       };
     },
 
     /**
-     * Generate option title from data
-     * @param {Object} data - Trip data
-     * @returns {string} Generated title
+     * Generate subtitle from metadata
+     * @param {Object} metadata - Metadata object
+     * @returns {string} Formatted subtitle
      */
-    generateTitle(data) {
-      // Priority: cruise name > trip title > destination
-      if (data.cruise?.cruiseLine && data.cruise?.shipName) {
-        return `${data.cruise.cruiseLine} ${data.cruise.shipName}`;
-      }
-      
-      if (data.metadata?.tripTitle) {
-        return data.metadata.tripTitle;
-      }
-      
-      if (data.metadata?.destination) {
-        return data.metadata.destination;
-      }
-      
-      return 'Untitled Trip';
-    },
-
-    /**
-     * Generate option subtitle from data
-     * @param {Object} data - Trip data
-     * @returns {string} Generated subtitle
-     */
-    generateSubtitle(data) {
+    generateSubtitle(metadata) {
       const parts = [];
       
-      // Add cabin/room type
-      if (data.cruise?.cabinCategory) {
-        parts.push(data.cruise.cabinCategory);
-      } else if (data.hotels?.[0]?.roomType) {
-        parts.push(data.hotels[0].roomType);
+      if (metadata.destination) {
+        parts.push(metadata.destination);
       }
       
-      // Add dates
-      if (data.metadata?.startDate && data.metadata?.endDate) {
-        parts.push(DateUtils.formatDateRange(data.metadata.startDate, data.metadata.endDate));
+      if (metadata.tripType) {
+        parts.push(metadata.tripType);
       }
       
-      return parts.join(' · ') || '';
+      if (metadata.guests) {
+        parts.push(`${metadata.guests} guests`);
+      }
+      
+      return parts.join(' • ');
     },
 
     /**
-     * Generate shareable URL slug
-     * @param {Object} data - Trip data
-     * @returns {string} URL slug
+     * Validate required metadata fields
+     * @param {Object} metadata - Metadata object
+     * @returns {Object} Validation result {valid: boolean, missing: string[]}
      */
-    generateShareableURL(data) {
-      const year = DateUtils.extractYear(data.metadata?.startDate);
-      const lastName = this.extractClientLastName(data.metadata?.clientName);
-      const tripType = data.overview?.tripType || data.metadata?.tripType || 'trip';
+    validateMetadata(metadata) {
+      const required = ['tripTitle', 'startDate', 'endDate', 'guests'];
+      const missing = [];
       
-      const slug = `${year}-${lastName}-${tripType}`
-        .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+      required.forEach(field => {
+        if (!metadata[field]) {
+          missing.push(field);
+        }
+      });
       
-      return slug;
-    },
-
-    /**
-     * Generate filename for downloads
-     * @param {Object} data - Trip data
-     * @param {string} extension - File extension (default: 'pdf')
-     * @returns {string} Filename
-     */
-    generateFileName(data, extension = 'pdf') {
-      const clientName = (data.metadata?.clientName || 'Client')
-        .replace(/\s+/g, '_')
-        .replace(/[^a-zA-Z0-9_]/g, '');
-      
-      const tripTitle = (data.metadata?.tripTitle || 'Trip')
-        .replace(/[^a-zA-Z0-9]/g, '_')
-        .replace(/_+/g, '_');
-      
-      const year = DateUtils.extractYear(data.metadata?.startDate) || 'YYYY';
-      
-      return `${clientName}_${tripTitle}_${year}.${extension}`;
-    },
-
-    /**
-     * Update lastModified timestamp
-     * @param {Object} data - Data object to update
-     * @returns {Object} Updated data
-     */
-    updateLastModified(data) {
-      if (!data.metadata) {
-        data.metadata = {};
-      }
-      data.metadata.lastModified = DateUtils.getCurrentTimestamp();
-      return data;
+      return {
+        valid: missing.length === 0,
+        missing: missing
+      };
     }
   };
 
   // ============================================
-  // 4. LABEL GENERATION
+  // 4. LABEL UTILITIES
   // ============================================
   const LabelUtils = {
     /**
-     * Generate labels for trip options based on pricing
-     * @param {Array} options - Array of trip options
-     * @returns {Array} Options with labels assigned
+     * Generate standardized bin name
+     * @param {string} year - Trip year (YYYY)
+     * @param {string} clientName - Client name
+     * @param {string} tripType - Trip type
+     * @param {number} optionNumber - Option number
+     * @returns {string} Formatted bin name
      */
-    generateOptionLabels(options) {
-      if (!options || options.length === 0) return options;
+    generateBinName(year, clientName, tripType, optionNumber) {
+      // Clean and format inputs
+      const cleanYear = year || new Date().getFullYear();
+      const cleanClient = (clientName || 'Unknown').replace(/[^a-zA-Z0-9]/g, '');
+      const cleanType = (tripType || 'Trip').replace(/[^a-zA-Z0-9]/g, '');
+      const cleanOption = optionNumber || 1;
       
-      // Create working copy
-      const working = [...options];
-      
-      // Sort by grand total (lowest to highest)
-      const sorted = working.sort((a, b) => {
-        const totalA = this.getGrandTotal(a);
-        const totalB = this.getGrandTotal(b);
-        return totalA - totalB;
-      });
-      
-      // Assign labels based on count
-      if (sorted.length >= 3) {
-        sorted[0].displayMetadata = sorted[0].displayMetadata || {};
-        sorted[0].displayMetadata.label = 'Most Affordable';
-        
-        sorted[1].displayMetadata = sorted[1].displayMetadata || {};
-        sorted[1].displayMetadata.label = 'Best Value';
-        
-        sorted[2].displayMetadata = sorted[2].displayMetadata || {};
-        sorted[2].displayMetadata.label = 'Premium Experience';
-        
-        // Additional options get generic labels
-        for (let i = 3; i < sorted.length; i++) {
-          sorted[i].displayMetadata = sorted[i].displayMetadata || {};
-          sorted[i].displayMetadata.label = `Option ${i + 1}`;
-        }
-      } else if (sorted.length === 2) {
-        sorted[0].displayMetadata = sorted[0].displayMetadata || {};
-        sorted[0].displayMetadata.label = 'Budget-Friendly';
-        
-        sorted[1].displayMetadata = sorted[1].displayMetadata || {};
-        sorted[1].displayMetadata.label = 'Premium Option';
-      } else if (sorted.length === 1) {
-        sorted[0].displayMetadata = sorted[0].displayMetadata || {};
-        sorted[0].displayMetadata.label = 'Recommended';
-      }
-      
-      // Return in ORIGINAL order
-      return options;
+      return `${cleanYear}-${cleanClient}-${cleanType}-Option${cleanOption}`;
     },
 
     /**
-     * Get grand total from option
-     * @param {Object} option - Trip option
-     * @returns {number} Grand total
+     * Parse bin name into components
+     * @param {string} binName - Bin name to parse
+     * @returns {Object} Parsed components
      */
-    getGrandTotal(option) {
-      if (option.pricing?.grandTotal) {
-        return Number(option.pricing.grandTotal);
-      }
+    parseBinName(binName) {
+      if (!binName) return {};
       
-      // Calculate if not present
-      return PriceUtils.calculateGrandTotal(option.pricing);
-    },
-
-    /**
-     * Validate and suggest label improvements
-     * @param {string} label - Proposed label
-     * @returns {Object} { isValid, suggestion, reason }
-     */
-    validateLabel(label) {
-      if (!label || label.trim() === '') {
-        return {
-          isValid: false,
-          suggestion: 'Best Value',
-          reason: 'Label cannot be empty'
-        };
-      }
-      
-      const trimmed = label.trim();
-      
-      // Check length
-      if (trimmed.length > 30) {
-        return {
-          isValid: false,
-          suggestion: trimmed.substring(0, 27) + '...',
-          reason: 'Label too long (max 30 characters)'
-        };
-      }
-      
-      // Check for special characters
-      if (!/^[a-zA-Z0-9\s\-'&]+$/.test(trimmed)) {
-        return {
-          isValid: false,
-          suggestion: trimmed.replace(/[^a-zA-Z0-9\s\-'&]/g, ''),
-          reason: 'Label contains invalid characters'
-        };
-      }
+      const parts = binName.split('-');
       
       return {
-        isValid: true,
-        suggestion: trimmed,
-        reason: 'Label is valid'
+        year: parts[0] || '',
+        clientName: parts[1] || '',
+        tripType: parts[2] || '',
+        optionNumber: parseInt((parts[3] || '').replace('Option', '')) || 1
       };
+    },
+
+    /**
+     * Generate trip label for display
+     * @param {Object} tripData - Trip data
+     * @returns {string} Display label
+     */
+    generateTripLabel(tripData) {
+      const metadata = MetadataUtils.extractMetadata(tripData);
+      
+      if (metadata.tripTitle) {
+        return metadata.tripTitle;
+      }
+      
+      const parts = [];
+      if (metadata.destination) parts.push(metadata.destination);
+      if (metadata.tripType) parts.push(metadata.tripType);
+      if (metadata.startDate) parts.push(DateUtils.extractYear(metadata.startDate));
+      
+      return parts.join(' - ') || 'Untitled Trip';
     }
   };
 
@@ -565,434 +461,355 @@ const ForgeUtils = (function() {
   // ============================================
   const ValidationUtils = {
     /**
-     * Validate trip option data structure
-     * @param {Object} data - Trip option data
-     * @returns {Object} { isValid, errors }
+     * Validate trip data structure
+     * @param {Object} tripData - Trip data to validate
+     * @returns {Object} Validation result {valid: boolean, errors: string[]}
      */
-    validateTripOption(data) {
+    validateTripData(tripData) {
       const errors = [];
       
-      // Check required top-level properties
-      if (!data.metadata) {
-        errors.push('Missing metadata object');
+      if (!tripData) {
+        errors.push('No trip data provided');
+        return { valid: false, errors };
+      }
+      
+      // Check metadata
+      if (!tripData.metadata) {
+        errors.push('Missing metadata section');
       } else {
-        // Validate metadata fields
-        if (!data.metadata.tripTitle) errors.push('Missing trip title');
-        if (!data.metadata.clientName) errors.push('Missing client name');
-        if (!data.metadata.startDate) errors.push('Missing start date');
-        if (!data.metadata.endDate) errors.push('Missing end date');
+        const metadataValidation = MetadataUtils.validateMetadata(tripData.metadata);
+        if (!metadataValidation.valid) {
+          errors.push(`Missing metadata fields: ${metadataValidation.missing.join(', ')}`);
+        }
+      }
+      
+      // Check pricing
+      if (!tripData.pricing) {
+        errors.push('Missing pricing section');
+      } else if (!tripData.pricing.grandTotal && tripData.pricing.grandTotal !== 0) {
+        errors.push('Missing grand total in pricing');
+      }
+      
+      // Check dates are valid
+      if (tripData.metadata?.startDate && tripData.metadata?.endDate) {
+        const start = new Date(tripData.metadata.startDate);
+        const end = new Date(tripData.metadata.endDate);
         
-        // Validate date format
-        if (data.metadata.startDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.metadata.startDate)) {
-          errors.push('Start date must be in YYYY-MM-DD format');
-        }
-        if (data.metadata.endDate && !/^\d{4}-\d{2}-\d{2}$/.test(data.metadata.endDate)) {
-          errors.push('End date must be in YYYY-MM-DD format');
-        }
-      }
-      
-      // Check required sections
-      if (!data.overview) errors.push('Missing overview section');
-      if (!data.pricing) errors.push('Missing pricing section');
-      
-      // At least one trip component required
-      const hasComponent = data.cruise || 
-                          (data.hotels && data.hotels.length > 0) || 
-                          (data.flights && data.flights.length > 0);
-      
-      if (!hasComponent) {
-        errors.push('Must have at least one trip component (cruise, hotel, or flight)');
-      }
-      
-      // Validate pricing
-      if (data.pricing) {
-        if (!data.pricing.grandTotal && !data.pricing.packageTotal) {
-          errors.push('Missing grand total or package total in pricing');
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          errors.push('Invalid date format');
+        } else if (end < start) {
+          errors.push('End date is before start date');
         }
       }
       
       return {
-        isValid: errors.length === 0,
+        valid: errors.length === 0,
         errors: errors
       };
     },
 
     /**
-     * Validate required fields before saving
-     * @param {Object} data - Data to validate
-     * @param {Array} requiredFields - Array of required field paths
-     * @returns {Object} { isValid, missing }
+     * Validate date format (YYYY-MM-DD)
+     * @param {string} dateString - Date to validate
+     * @returns {boolean} Is valid
      */
-    validateRequiredFields(data, requiredFields) {
-      const missing = [];
+    isValidDate(dateString) {
+      if (!dateString) return false;
       
-      requiredFields.forEach(fieldPath => {
-        const value = this.getNestedValue(data, fieldPath);
-        if (value === undefined || value === null || value === '') {
-          missing.push(fieldPath);
-        }
-      });
-      
-      return {
-        isValid: missing.length === 0,
-        missing: missing
-      };
-    },
-
-    /**
-     * Get nested object value by path
-     * @param {Object} obj - Object to search
-     * @param {string} path - Dot-notation path (e.g., 'metadata.tripTitle')
-     * @returns {*} Value or undefined
-     */
-    getNestedValue(obj, path) {
-      return path.split('.').reduce((current, key) => 
-        current?.[key], obj
-      );
-    },
-
-    /**
-     * Sanitize user input
-     * @param {string} input - User input
-     * @param {string} type - Type of sanitization ('text', 'number', 'date')
-     * @returns {string} Sanitized input
-     */
-    sanitizeInput(input, type = 'text') {
-      if (!input) return '';
-      
-      const str = String(input).trim();
-      
-      switch (type) {
-        case 'number':
-          return str.replace(/[^0-9.-]/g, '');
-        
-        case 'date':
-          return str.replace(/[^0-9-]/g, '');
-        
-        case 'text':
-        default:
-          // Remove potentially dangerous characters
-          return str
-            .replace(/[<>]/g, '')
-            .replace(/javascript:/gi, '')
-            .replace(/on\w+=/gi, '');
+      // Check format
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        return false;
       }
+      
+      // Check if parseable
+      const date = new Date(dateString);
+      return !isNaN(date.getTime());
+    },
+
+    /**
+     * Validate price value
+     * @param {*} price - Price to validate
+     * @returns {boolean} Is valid
+     */
+    isValidPrice(price) {
+      if (price === null || price === undefined) return false;
+      const num = Number(price);
+      return !isNaN(num) && num >= 0;
+    },
+
+    /**
+     * Validate email format
+     * @param {string} email - Email to validate
+     * @returns {boolean} Is valid
+     */
+    isValidEmail(email) {
+      if (!email) return false;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
     }
   };
 
   // ============================================
-  // 6. STORAGE HELPERS (JSONBin)
+  // 6. STORAGE UTILITIES (JSONBin)
   // ============================================
   const StorageUtils = {
     /**
-     * Get JSONBin headers
-     * @param {boolean} includeMaster - Include master key header
-     * @returns {Object} Headers object
-     */
-    getHeaders(includeMaster = false) {
-      const headers = {
-        'Content-Type': 'application/json',
-        'X-Master-Key': CONFIG.JSONBIN_API_KEY
-      };
-      
-      if (includeMaster) {
-        headers['X-Bin-Meta'] = 'false';
-      }
-      
-      return headers;
-    },
-
-    /**
-     * Fetch master index
+     * Load master index from JSONBin
+     * @param {string} apiKey - JSONBin API key
+     * @param {string} indexId - Master index bin ID
      * @returns {Promise<Object>} Master index data
      */
-    async fetchMasterIndex() {
+    async loadMasterIndex(apiKey, indexId) {
+      if (!apiKey || !indexId) {
+        throw new Error('API key and index ID are required');
+      }
+      
       try {
-        const response = await fetch(
-          `${CONFIG.JSONBIN_BASE_URL}/b/${CONFIG.MASTER_INDEX_ID}/latest`,
-          { headers: this.getHeaders() }
-        );
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${indexId}/latest`, {
+          method: 'GET',
+          headers: {
+            'X-Master-Key': apiKey,
+            'X-Access-Key': apiKey
+          }
+        });
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`Failed to load master index: ${response.statusText}`);
         }
         
         const data = await response.json();
-        return data.record || data;
+        return data.record || {};
       } catch (error) {
-        console.error('Error fetching master index:', error);
+        console.error('Error loading master index:', error);
         throw error;
       }
     },
 
     /**
-     * Update master index
-     * @param {Object} indexData - Updated index data
-     * @returns {Promise<Object>} Response data
+     * Save master index to JSONBin
+     * @param {Object} indexData - Index data to save
+     * @param {string} apiKey - JSONBin API key
+     * @param {string} indexId - Master index bin ID
+     * @returns {Promise<Object>} Response from JSONBin
      */
-    async updateMasterIndex(indexData) {
+    async saveMasterIndex(indexData, apiKey, indexId) {
+      if (!apiKey || !indexId) {
+        throw new Error('API key and index ID are required');
+      }
+      
       try {
-        const response = await fetch(
-          `${CONFIG.JSONBIN_BASE_URL}/b/${CONFIG.MASTER_INDEX_ID}`,
-          {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify(indexData)
-          }
-        );
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${indexId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': apiKey,
+            'X-Access-Key': apiKey
+          },
+          body: JSON.stringify(indexData)
+        });
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`Failed to save master index: ${response.statusText}`);
         }
         
         return await response.json();
       } catch (error) {
-        console.error('Error updating master index:', error);
+        console.error('Error saving master index:', error);
         throw error;
       }
     },
 
     /**
-     * Fetch trip option by bin ID
-     * @param {string} binId - JSONBin bin ID
-     * @returns {Promise<Object>} Trip option data
+     * Load individual bin data
+     * @param {string} binId - Bin ID to load
+     * @param {string} apiKey - JSONBin API key
+     * @returns {Promise<Object>} Bin data
      */
-    async fetchTripOption(binId) {
+    async loadBin(binId, apiKey) {
+      if (!apiKey || !binId) {
+        throw new Error('API key and bin ID are required');
+      }
+      
       try {
-        const response = await fetch(
-          `${CONFIG.JSONBIN_BASE_URL}/b/${binId}/latest`,
-          { headers: this.getHeaders() }
-        );
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+          method: 'GET',
+          headers: {
+            'X-Master-Key': apiKey,
+            'X-Access-Key': apiKey
+          }
+        });
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`Failed to load bin: ${response.statusText}`);
         }
         
         const data = await response.json();
-        return data.record || data;
+        return data.record || {};
       } catch (error) {
-        console.error('Error fetching trip option:', error);
+        console.error('Error loading bin:', error);
         throw error;
       }
     },
 
     /**
-     * Create new trip option bin
-     * @param {Object} optionData - Trip option data
-     * @returns {Promise<Object>} { binId, data }
+     * Create new bin
+     * @param {Object} data - Data to save
+     * @param {string} apiKey - JSONBin API key
+     * @param {string} binName - Optional bin name
+     * @returns {Promise<Object>} Response with new bin ID
      */
-    async createTripOption(optionData) {
+    async createBin(data, apiKey, binName = null) {
+      if (!apiKey) {
+        throw new Error('API key is required');
+      }
+      
       try {
-        // Add creation metadata
-        optionData.metadata = optionData.metadata || {};
-        optionData.metadata.createdDate = DateUtils.getCurrentTimestamp();
-        optionData.metadata.version = CONFIG.VERSION;
+        const headers = {
+          'Content-Type': 'application/json',
+          'X-Master-Key': apiKey,
+          'X-Access-Key': apiKey
+        };
         
-        const response = await fetch(
-          `${CONFIG.JSONBIN_BASE_URL}/b`,
-          {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(optionData)
-          }
-        );
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        if (binName) {
+          headers['X-Bin-Name'] = binName;
         }
         
-        const result = await response.json();
-        return {
-          binId: result.metadata.id,
-          data: optionData
-        };
-      } catch (error) {
-        console.error('Error creating trip option:', error);
-        throw error;
-      }
-    },
-
-    /**
-     * Update existing trip option
-     * @param {string} binId - JSONBin bin ID
-     * @param {Object} optionData - Updated trip option data
-     * @returns {Promise<Object>} Response data
-     */
-    async updateTripOption(binId, optionData) {
-      try {
-        // Update lastModified timestamp
-        MetadataUtils.updateLastModified(optionData);
-        
-        const response = await fetch(
-          `${CONFIG.JSONBIN_BASE_URL}/b/${binId}`,
-          {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify(optionData)
-          }
-        );
+        const response = await fetch('https://api.jsonbin.io/v3/b', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(data)
+        });
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`Failed to create bin: ${response.statusText}`);
         }
         
         return await response.json();
       } catch (error) {
-        console.error('Error updating trip option:', error);
+        console.error('Error creating bin:', error);
         throw error;
       }
     },
 
     /**
-     * Delete trip option bin
-     * @param {string} binId - JSONBin bin ID
-     * @returns {Promise<boolean>} Success status
+     * Update existing bin
+     * @param {string} binId - Bin ID to update
+     * @param {Object} data - New data
+     * @param {string} apiKey - JSONBin API key
+     * @returns {Promise<Object>} Response from JSONBin
      */
-    async deleteTripOption(binId) {
+    async updateBin(binId, data, apiKey) {
+      if (!apiKey || !binId) {
+        throw new Error('API key and bin ID are required');
+      }
+      
       try {
-        const response = await fetch(
-          `${CONFIG.JSONBIN_BASE_URL}/b/${binId}`,
-          {
-            method: 'DELETE',
-            headers: this.getHeaders()
-          }
-        );
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': apiKey,
+            'X-Access-Key': apiKey
+          },
+          body: JSON.stringify(data)
+        });
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`Failed to update bin: ${response.statusText}`);
         }
         
-        return true;
+        return await response.json();
       } catch (error) {
-        console.error('Error deleting trip option:', error);
+        console.error('Error updating bin:', error);
         throw error;
       }
     },
 
     /**
-     * Add trip option to master index
-     * @param {string} binId - JSONBin bin ID
-     * @param {Object} optionData - Trip option data
-     * @returns {Promise<Object>} Updated index
+     * Delete bin
+     * @param {string} binId - Bin ID to delete
+     * @param {string} apiKey - JSONBin API key
+     * @returns {Promise<Object>} Response from JSONBin
      */
-    async addToMasterIndex(binId, optionData) {
-      try {
-        const index = await this.fetchMasterIndex();
-        
-        // Ensure options array exists
-        if (!index.options) {
-          index.options = [];
-        }
-        
-        // Create index entry
-        const indexEntry = {
-          binId: binId,
-          tripTitle: optionData.metadata?.tripTitle || 'Untitled',
-          clientName: optionData.metadata?.clientName || '',
-          startDate: optionData.metadata?.startDate || '',
-          createdDate: optionData.metadata?.createdDate || DateUtils.getCurrentTimestamp(),
-          lastModified: optionData.metadata?.lastModified || DateUtils.getCurrentTimestamp()
-        };
-        
-        // Add to beginning of array (newest first)
-        index.options.unshift(indexEntry);
-        
-        // Update master index
-        await this.updateMasterIndex(index);
-        
-        return index;
-      } catch (error) {
-        console.error('Error adding to master index:', error);
-        throw error;
+    async deleteBin(binId, apiKey) {
+      if (!apiKey || !binId) {
+        throw new Error('API key and bin ID are required');
       }
-    },
-
-    /**
-     * Remove trip option from master index
-     * @param {string} binId - JSONBin bin ID to remove
-     * @returns {Promise<Object>} Updated index
-     */
-    async removeFromMasterIndex(binId) {
+      
       try {
-        const index = await this.fetchMasterIndex();
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+          method: 'DELETE',
+          headers: {
+            'X-Master-Key': apiKey,
+            'X-Access-Key': apiKey
+          }
+        });
         
-        if (!index.options) {
-          return index;
+        if (!response.ok) {
+          throw new Error(`Failed to delete bin: ${response.statusText}`);
         }
         
-        // Filter out the option
-        index.options = index.options.filter(opt => opt.binId !== binId);
-        
-        // Update master index
-        await this.updateMasterIndex(index);
-        
-        return index;
+        return await response.json();
       } catch (error) {
-        console.error('Error removing from master index:', error);
+        console.error('Error deleting bin:', error);
         throw error;
       }
     }
   };
 
   // ============================================
-  // 7. UI HELPERS
+  // 7. UI UTILITIES
   // ============================================
   const UIUtils = {
     /**
      * Show toast notification
      * @param {string} message - Message to display
-     * @param {string} type - Type: 'success', 'error', 'info', 'warning'
+     * @param {string} type - Toast type: 'success', 'error', 'info', 'warning'
      * @param {number} duration - Duration in ms (default: 3000)
      */
-    showToast(message, type = 'success', duration = 3000) {
-      // Remove existing toast
-      const existing = document.getElementById('trnt-toast');
-      if (existing) {
-        existing.remove();
-      }
-      
-      // Create toast element
+    showToast(message, type = 'info', duration = 3000) {
       const toast = document.createElement('div');
-      toast.id = 'trnt-toast';
-      toast.className = 'trnt-toast';
       
-      // Set styling based on type
-      const styles = {
-        success: { bg: '#10b981', icon: CONFIG.EMOJI.CHECK },
-        error: { bg: '#ef4444', icon: CONFIG.EMOJI.ERROR },
-        warning: { bg: '#f59e0b', icon: CONFIG.EMOJI.WARNING },
-        info: { bg: '#3b82f6', icon: CONFIG.EMOJI.CHECK }
+      const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6',
+        warning: '#f59e0b'
       };
       
-      const style = styles[type] || styles.info;
+      const icons = {
+        success: CONFIG.EMOJI.CHECK,
+        error: CONFIG.EMOJI.ERROR,
+        info: 'ℹ️',
+        warning: CONFIG.EMOJI.WARNING
+      };
       
       toast.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${style.bg};
+        background: ${colors[type] || colors.info};
         color: white;
-        padding: 1rem 1.5rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        z-index: 9999;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+        max-width: 400px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 14px;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        font-family: system-ui, -apple-system, sans-serif;
-        font-size: 0.875rem;
-        font-weight: 500;
-        animation: slideIn 0.3s ease-out;
+        gap: 12px;
       `;
       
       toast.innerHTML = `
-        <span style="font-size: 1.25rem;">${style.icon}</span>
+        <span style="font-size: 20px;">${icons[type] || icons.info}</span>
         <span>${message}</span>
       `;
       
       document.body.appendChild(toast);
       
-      // Auto-remove after duration
       setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease-in';
         setTimeout(() => toast.remove(), 300);
@@ -1001,129 +818,121 @@ const ForgeUtils = (function() {
 
     /**
      * Show loading spinner
-     * @param {string} message - Loading message
-     * @returns {Object} Spinner object with remove() method
+     * @param {string} message - Optional loading message
+     * @returns {HTMLElement} Spinner element (call .remove() to hide)
      */
-    showLoading(message = 'Loading...') {
-      const overlay = document.createElement('div');
-      overlay.id = 'trnt-loading-overlay';
-      overlay.style.cssText = `
+    showSpinner(message = 'Loading...') {
+      const spinner = document.createElement('div');
+      spinner.id = 'forge-spinner';
+      
+      spinner.style.cssText = `
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+        right: 0;
+        bottom: 0;
         background: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 9998;
+        z-index: 9999;
+        flex-direction: column;
+        gap: 16px;
       `;
       
-      overlay.innerHTML = `
+      spinner.innerHTML = `
         <div style="
-          background: white;
-          padding: 2rem;
-          border-radius: 0.75rem;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-          text-align: center;
-          max-width: 300px;
-        ">
-          <div style="
-            border: 3px solid #f3f4f6;
-            border-top-color: #3b82f6;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
-          "></div>
-          <p style="
-            margin: 0;
-            color: #374151;
-            font-family: system-ui, -apple-system, sans-serif;
-            font-size: 0.875rem;
-            font-weight: 500;
-          ">${message}</p>
+          width: 48px;
+          height: 48px;
+          border: 4px solid rgba(255, 255, 255, 0.3);
+          border-top: 4px solid white;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        "></div>
+        <div style="color: white; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+          ${message}
         </div>
       `;
       
-      document.body.appendChild(overlay);
-      
-      return {
-        remove: () => {
-          const el = document.getElementById('trnt-loading-overlay');
-          if (el) el.remove();
-        }
-      };
+      document.body.appendChild(spinner);
+      return spinner;
+    },
+
+    /**
+     * Hide loading spinner
+     */
+    hideSpinner() {
+      const spinner = document.getElementById('forge-spinner');
+      if (spinner) {
+        spinner.remove();
+      }
     },
 
     /**
      * Show confirmation dialog
-     * @param {string} message - Confirmation message
-     * @param {string} confirmText - Confirm button text
-     * @param {string} cancelText - Cancel button text
-     * @returns {Promise<boolean>} True if confirmed
+     * @param {string} message - Message to display
+     * @param {string} confirmText - Confirm button text (default: 'OK')
+     * @param {string} cancelText - Cancel button text (default: 'Cancel')
+     * @returns {Promise<boolean>} User's choice
      */
-    showConfirm(message, confirmText = 'Confirm', cancelText = 'Cancel') {
+    showConfirm(message, confirmText = 'OK', cancelText = 'Cancel') {
       return new Promise((resolve) => {
         const modal = document.createElement('div');
-        modal.id = 'trnt-confirm-modal';
         modal.style.cssText = `
           position: fixed;
           top: 0;
           left: 0;
-          width: 100%;
-          height: 100%;
+          right: 0;
+          bottom: 0;
           background: rgba(0, 0, 0, 0.5);
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 9999;
+          z-index: 10000;
         `;
         
         modal.innerHTML = `
           <div style="
             background: white;
-            padding: 2rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
             max-width: 400px;
             width: 90%;
           ">
             <p style="
-              margin: 0 0 1.5rem 0;
+              margin: 0 0 24px 0;
+              font-size: 16px;
               color: #374151;
-              font-family: system-ui, -apple-system, sans-serif;
-              font-size: 1rem;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
               line-height: 1.5;
             ">${message}</p>
             <div style="
               display: flex;
-              gap: 0.75rem;
+              gap: 12px;
               justify-content: flex-end;
             ">
-              <button id="trnt-confirm-cancel" style="
-                padding: 0.5rem 1.5rem;
+              <button id="forge-confirm-cancel" style="
+                padding: 10px 20px;
                 border: 1px solid #d1d5db;
-                border-radius: 0.375rem;
                 background: white;
                 color: #374151;
-                font-family: system-ui, -apple-system, sans-serif;
-                font-size: 0.875rem;
-                font-weight: 500;
+                border-radius: 6px;
                 cursor: pointer;
+                font-size: 14px;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-weight: 500;
               ">${cancelText}</button>
-              <button id="trnt-confirm-ok" style="
-                padding: 0.5rem 1.5rem;
+              <button id="forge-confirm-ok" style="
+                padding: 10px 20px;
                 border: none;
-                border-radius: 0.375rem;
                 background: #3b82f6;
                 color: white;
-                font-family: system-ui, -apple-system, sans-serif;
-                font-size: 0.875rem;
-                font-weight: 500;
+                border-radius: 6px;
                 cursor: pointer;
+                font-size: 14px;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                font-weight: 500;
               ">${confirmText}</button>
             </div>
           </div>
@@ -1135,12 +944,12 @@ const ForgeUtils = (function() {
           modal.remove();
         };
         
-        document.getElementById('trnt-confirm-ok').addEventListener('click', () => {
+        document.getElementById('forge-confirm-ok').addEventListener('click', () => {
           cleanup();
           resolve(true);
         });
         
-        document.getElementById('trnt-confirm-cancel').addEventListener('click', () => {
+        document.getElementById('forge-confirm-cancel').addEventListener('click', () => {
           cleanup();
           resolve(false);
         });
@@ -1329,10 +1138,10 @@ const ForgeUtils = (function() {
   // ADD ANIMATIONS TO DOM
   // ============================================
   const addAnimations = () => {
-    if (document.getElementById('trnt-animations')) return;
+    if (document.getElementById('forge-animations')) return;
     
     const style = document.createElement('style');
-    style.id = 'trnt-animations';
+    style.id = 'forge-animations';
     style.textContent = `
       @keyframes slideIn {
         from {
@@ -1398,5 +1207,5 @@ const ForgeUtils = (function() {
 window.ForgeUtils = ForgeUtils;
 
 // Console message
-console.log(`%c🚢 Forge Utils v${ForgeUtils.version} Loaded`, 
+console.log(`%c🔥 FORGE v${ForgeUtils.version} Loaded`, 
   'color: #3b82f6; font-weight: bold; font-size: 14px;');
