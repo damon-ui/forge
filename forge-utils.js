@@ -768,6 +768,24 @@ const ForgeUtils = (function() {
      * @param {number} duration - Duration in ms (default: 3000)
      */
     showToast(message, type = 'info', duration = 3000) {
+      // Create or get toast container
+      let container = document.getElementById('forge-toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'forge-toast-container';
+        container.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 10000;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          pointer-events: none;
+        `;
+        document.body.appendChild(container);
+      }
+      
       const toast = document.createElement('div');
       
       const colors = {
@@ -780,20 +798,16 @@ const ForgeUtils = (function() {
       const icons = {
         success: CONFIG.EMOJI.CHECK,
         error: CONFIG.EMOJI.ERROR,
-        info: 'ℹ️',
+        info: '\u{2139}\uFE0F',
         warning: CONFIG.EMOJI.WARNING
       };
       
       toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
         background: ${colors[type] || colors.info};
         color: white;
         padding: 16px 24px;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        z-index: 10000;
         animation: slideIn 0.3s ease-out;
         max-width: 400px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -801,6 +815,7 @@ const ForgeUtils = (function() {
         display: flex;
         align-items: center;
         gap: 12px;
+        pointer-events: auto;
       `;
       
       toast.innerHTML = `
@@ -808,7 +823,7 @@ const ForgeUtils = (function() {
         <span>${message}</span>
       `;
       
-      document.body.appendChild(toast);
+      container.appendChild(toast);
       
       setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease-in';
