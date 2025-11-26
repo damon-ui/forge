@@ -1,6 +1,6 @@
 /**
  * FORGE - JavaScript Utility Library
- * Version: 3.1.0
+ * Version: 3.1.1
  * Date: November 27, 2025
  * 
  * Lightweight utility library for date formatting, price calculations, 
@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.1.0',
+    VERSION: '3.1.1',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -1043,7 +1043,7 @@ const ForgeUtils = (function() {
      * @param {Object} options - Configuration
      * @param {Function} options.onEnterPreview - Callback when entering preview mode
      * @param {Function} options.onExitPreview - Callback when exiting to admin mode
-     * @param {string} options.insertAfter - CSS selector for element to insert banners after
+     * @param {string} options.insertInto - CSS selector for container to insert banners at top of
      */
     initBanners(options = {}) {
       // Store callbacks
@@ -1157,17 +1157,28 @@ const ForgeUtils = (function() {
           </button>
         `;
         
-        // Insert at top of body (or after a specific element if provided)
-        let target = document.body.firstChild;
-        if (options.insertAfter) {
-          const afterEl = document.querySelector(options.insertAfter);
-          if (afterEl && afterEl.nextSibling) {
-            target = afterEl.nextSibling;
+        // Determine where to insert banners
+        let container = null;
+        let insertBeforeEl = null;
+        
+        if (options.insertInto) {
+          // Insert at top of specified container
+          container = document.querySelector(options.insertInto);
+          if (container) {
+            insertBeforeEl = container.firstChild;
           }
         }
         
-        document.body.insertBefore(previewBanner, target);
-        document.body.insertBefore(adminBanner, previewBanner);
+        // Fallback to body if no container specified or found
+        if (!container) {
+          container = document.body;
+          insertBeforeEl = document.body.firstChild;
+        }
+        
+        // Insert preview banner first, then admin banner before it
+        // This ensures admin banner is on top when both would be visible
+        container.insertBefore(previewBanner, insertBeforeEl);
+        container.insertBefore(adminBanner, previewBanner);
       }
       
       console.log('%c\u{1F6A9} FORGE Banner System initialized', 'color: #83644D; font-weight: bold;');
