@@ -1,7 +1,7 @@
 /**
  * FORGE - JavaScript Utility Library
- * Version: 3.0.0
- * Date: November 19, 2025
+ * Version: 3.1.0
+ * Date: November 27, 2025
  * 
  * Lightweight utility library for date formatting, price calculations, 
  * and data validation in travel applications.
@@ -13,7 +13,7 @@
  * 4. Label Generation
  * 5. Validation
  * 6. Storage Helpers (JSONBin)
- * 7. UI Helpers
+ * 7. UI Helpers (Toast, Spinner, Banners)
  * 8. Data Migration
  */
 
@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.0.0',
+    VERSION: '3.1.0',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -36,6 +36,11 @@ const ForgeUtils = (function() {
       ERROR: '\u{274C}'
     }
   };
+
+  // ============================================
+  // VIEW MODE STATE (for banner system)
+  // ============================================
+  let currentViewMode = 'admin';
 
   // ============================================
   // 1. DATE UTILITIES
@@ -370,7 +375,7 @@ const ForgeUtils = (function() {
         parts.push(`${metadata.guests} guests`);
       }
       
-      return parts.join(' • ');
+      return parts.join(' \u2022 ');
     },
 
     /**
@@ -761,6 +766,9 @@ const ForgeUtils = (function() {
   // 7. UI UTILITIES
   // ============================================
   const UIUtils = {
+    // Store banner callbacks
+    _bannerCallbacks: {},
+
     /**
      * Show toast notification
      * @param {string} message - Message to display
@@ -768,20 +776,22 @@ const ForgeUtils = (function() {
      * @param {number} duration - Duration in ms (default: 3000)
      */
     showToast(message, type = 'info', duration = 3000) {
-      // Create or get toast container
+      // Create or get toast container - STANDARDIZED POSITION: bottom center
       let container = document.getElementById('forge-toast-container');
       if (!container) {
         container = document.createElement('div');
         container.id = 'forge-toast-container';
         container.style.cssText = `
           position: fixed;
-          top: 20px;
-          right: 20px;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
           z-index: 10000;
           display: flex;
           flex-direction: column;
           gap: 10px;
           pointer-events: none;
+          align-items: center;
         `;
         document.body.appendChild(container);
       }
@@ -808,7 +818,7 @@ const ForgeUtils = (function() {
         padding: 16px 24px;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        animation: slideIn 0.3s ease-out;
+        animation: forgeSlideUp 0.3s ease-out;
         max-width: 400px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         font-size: 14px;
@@ -826,7 +836,7 @@ const ForgeUtils = (function() {
       container.appendChild(toast);
       
       setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease-in';
+        toast.style.animation = 'forgeSlideDown 0.3s ease-in';
         setTimeout(() => toast.remove(), 300);
       }, duration);
     },
@@ -862,7 +872,7 @@ const ForgeUtils = (function() {
           border: 4px solid rgba(255, 255, 255, 0.3);
           border-top: 4px solid white;
           border-radius: 50%;
-          animation: spin 1s linear infinite;
+          animation: forgeSpin 1s linear infinite;
         "></div>
         <div style="color: white; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
           ${message}
@@ -1021,6 +1031,211 @@ const ForgeUtils = (function() {
           });
           break;
       }
+    },
+
+    // ==========================================
+    // BANNER SYSTEM (v3.1.0)
+    // ==========================================
+
+    /**
+     * Initialize view mode banner system
+     * Injects CSS and HTML for admin/preview banners
+     * @param {Object} options - Configuration
+     * @param {Function} options.onEnterPreview - Callback when entering preview mode
+     * @param {Function} options.onExitPreview - Callback when exiting to admin mode
+     * @param {string} options.insertAfter - CSS selector for element to insert banners after
+     */
+    initBanners(options = {}) {
+      // Store callbacks
+      this._bannerCallbacks = options;
+      
+      // Inject CSS if not already present
+      if (!document.getElementById('forge-banner-styles')) {
+        const style = document.createElement('style');
+        style.id = 'forge-banner-styles';
+        style.textContent = `
+          /* FORGE Banner System */
+          .forge-banner-admin,
+          .forge-banner-preview {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          }
+          
+          /* Hidden state - must override display */
+          .forge-banner-admin.hidden,
+          .forge-banner-preview.hidden {
+            display: none !important;
+          }
+          
+          /* Admin Banner - TRNT Brown */
+          .forge-banner-admin {
+            background: #83644D;
+            color: white;
+          }
+          
+          /* Preview Banner - Amber/Yellow */
+          .forge-banner-preview {
+            background: #fef3c7;
+            border-bottom: 2px solid #fcd34d;
+            color: #92400e;
+          }
+          
+          .forge-banner-text {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: 0.025em;
+          }
+          
+          .forge-banner-btn {
+            padding: 0.5rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: none;
+          }
+          
+          /* Admin banner button (light on dark) */
+          .forge-banner-admin .forge-banner-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+          }
+          .forge-banner-admin .forge-banner-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+          }
+          
+          /* Preview banner button (amber) */
+          .forge-banner-preview .forge-banner-btn {
+            background: #d97706;
+            color: white;
+          }
+          .forge-banner-preview .forge-banner-btn:hover {
+            background: #b45309;
+          }
+          
+          /* Mobile adjustments */
+          @media (max-width: 640px) {
+            .forge-banner-admin,
+            .forge-banner-preview {
+              padding: 0.75rem 1rem;
+            }
+            .forge-banner-text {
+              font-size: 1rem;
+            }
+            .forge-banner-btn {
+              padding: 0.375rem 1rem;
+              font-size: 0.8125rem;
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      // Inject HTML if not already present
+      if (!document.getElementById('forgeBannerAdmin')) {
+        const adminBanner = document.createElement('div');
+        adminBanner.id = 'forgeBannerAdmin';
+        adminBanner.className = 'forge-banner-admin hidden';
+        adminBanner.innerHTML = `
+          <span class="forge-banner-text">Admin Mode</span>
+          <button class="forge-banner-btn" onclick="ForgeUtils.UI.setViewMode('preview')">
+            Preview as Client
+          </button>
+        `;
+        
+        const previewBanner = document.createElement('div');
+        previewBanner.id = 'forgeBannerPreview';
+        previewBanner.className = 'forge-banner-preview hidden';
+        previewBanner.innerHTML = `
+          <span class="forge-banner-text">Client Preview Mode</span>
+          <button class="forge-banner-btn" onclick="ForgeUtils.UI.setViewMode('admin')">
+            Back to Admin
+          </button>
+        `;
+        
+        // Insert at top of body (or after a specific element if provided)
+        let target = document.body.firstChild;
+        if (options.insertAfter) {
+          const afterEl = document.querySelector(options.insertAfter);
+          if (afterEl && afterEl.nextSibling) {
+            target = afterEl.nextSibling;
+          }
+        }
+        
+        document.body.insertBefore(previewBanner, target);
+        document.body.insertBefore(adminBanner, previewBanner);
+      }
+      
+      console.log('%c\u{1F6A9} FORGE Banner System initialized', 'color: #83644D; font-weight: bold;');
+    },
+
+    /**
+     * Set view mode and update banner visibility
+     * @param {string} mode - 'admin', 'preview', or 'client'
+     */
+    setViewMode(mode) {
+      if (!['admin', 'preview', 'client'].includes(mode)) {
+        console.warn('Invalid view mode:', mode);
+        return;
+      }
+      
+      currentViewMode = mode;
+      
+      const adminBanner = document.getElementById('forgeBannerAdmin');
+      const previewBanner = document.getElementById('forgeBannerPreview');
+      
+      if (!adminBanner || !previewBanner) {
+        console.warn('Banners not initialized. Call initBanners() first.');
+        return;
+      }
+      
+      // Hide both first
+      adminBanner.classList.add('hidden');
+      previewBanner.classList.add('hidden');
+      
+      // Show appropriate banner and fire callback
+      if (mode === 'admin') {
+        adminBanner.classList.remove('hidden');
+        if (this._bannerCallbacks?.onExitPreview) {
+          this._bannerCallbacks.onExitPreview();
+        }
+      } else if (mode === 'preview') {
+        previewBanner.classList.remove('hidden');
+        if (this._bannerCallbacks?.onEnterPreview) {
+          this._bannerCallbacks.onEnterPreview();
+        }
+      }
+      // 'client' mode = both hidden, no callback needed
+      
+      console.log('%c\u{1F6A9} View mode:', 'color: #83644D;', mode);
+    },
+
+    /**
+     * Get current view mode
+     * @returns {string} Current mode ('admin', 'preview', or 'client')
+     */
+    getViewMode() {
+      return currentViewMode;
+    },
+
+    /**
+     * Check if currently in admin mode
+     * @returns {boolean}
+     */
+    isAdminMode() {
+      return currentViewMode === 'admin';
+    },
+
+    /**
+     * Check if currently in any client-facing mode (preview or client)
+     * @returns {boolean}
+     */
+    isClientFacing() {
+      return currentViewMode === 'preview' || currentViewMode === 'client';
     }
   };
 
@@ -1034,8 +1249,8 @@ const ForgeUtils = (function() {
      * @returns {Object} Data in v3.0 format
      */
     migrateToV3(oldData) {
-      // If already v3.0, return as-is
-      if (oldData.metadata?.version === CONFIG.VERSION) {
+      // If already v3.0+, return as-is
+      if (oldData.metadata?.version && oldData.metadata.version >= '3.0.0') {
         return oldData;
       }
       
@@ -1158,7 +1373,7 @@ const ForgeUtils = (function() {
     const style = document.createElement('style');
     style.id = 'forge-animations';
     style.textContent = `
-      @keyframes slideIn {
+      @keyframes forgeSlideIn {
         from {
           transform: translateX(100%);
           opacity: 0;
@@ -1169,7 +1384,7 @@ const ForgeUtils = (function() {
         }
       }
       
-      @keyframes slideOut {
+      @keyframes forgeSlideOut {
         from {
           transform: translateX(0);
           opacity: 1;
@@ -1180,7 +1395,29 @@ const ForgeUtils = (function() {
         }
       }
       
-      @keyframes spin {
+      @keyframes forgeSlideUp {
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      
+      @keyframes forgeSlideDown {
+        from {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+      }
+      
+      @keyframes forgeSpin {
         to {
           transform: rotate(360deg);
         }
@@ -1222,5 +1459,5 @@ const ForgeUtils = (function() {
 window.ForgeUtils = ForgeUtils;
 
 // Console message
-console.log(`%c🔥 FORGE v${ForgeUtils.version} Loaded`, 
-  'color: #3b82f6; font-weight: bold; font-size: 14px;');
+console.log(`%c\u{1F525} FORGE v${ForgeUtils.version} Loaded`, 
+  'color: #83644D; font-weight: bold; font-size: 14px;');
