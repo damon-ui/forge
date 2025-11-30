@@ -103,6 +103,22 @@ body {
 #comparisonTable table {
   border-collapse: separate;
   border-spacing: 0;
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* Column widths - Field column fixed, option columns equal */
+#comparisonTable th:first-child,
+#comparisonTable td:first-child {
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+}
+
+/* Option columns share remaining space equally */
+#comparisonTable th:not(:first-child),
+#comparisonTable td:not(:first-child) {
+  width: auto;
 }
 
 #comparisonTable th {
@@ -511,21 +527,17 @@ body.client-view .hero-banner .image-overlay {
   }
   
   /* Field column - narrower on mobile */
-  #comparisonTable th.sticky,
-  #comparisonTable td.sticky {
-    min-width: 100px !important;
-    max-width: 120px !important;
-    width: 100px !important;
+  #comparisonTable th:first-child,
+  #comparisonTable td:first-child {
+    width: 110px !important;
+    min-width: 110px !important;
+    max-width: 110px !important;
   }
   
-  /* Option columns - give them room to breathe */
-  #comparisonTable th:not(.sticky),
-  #comparisonTable td:not(.sticky) {
-    min-width: 150px !important;
-  }
-  
-  #comparisonTable .sticky {
-    min-width: 100px !important;
+  /* Option columns - equal width on mobile */
+  #comparisonTable th:not(:first-child),
+  #comparisonTable td:not(:first-child) {
+    min-width: 140px !important;
   }
   
   /* Admin controls - wrap on mobile */
