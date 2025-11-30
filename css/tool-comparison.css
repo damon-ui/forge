@@ -1,0 +1,575 @@
+/*
+ * TRNT Travel Tools - Comparison Tool Styles
+ * Version: 3.10
+ * Extracted: 2025-11-30
+ * CDN: https://cdn.jsdelivr.net/gh/damon-ui/forge@main/css/tool-comparison.css
+ */
+
+/* TRNT Brand Colors */
+:root {
+  --trnt-bg: #EBE3DA;
+  --trnt-accent: #3D3732;
+  --trnt-secondary: #83644D;
+  --trnt-secondary2: #AD845B;
+  --trnt-border: #90867C;
+  --trnt-link: #5EA9D8;
+  
+  /* Button palette - Earth tones (approved Nov 28, 2025) */
+  --btn-primary: #3D3732;      /* Brand Brown - Edit, View, Save */
+  --btn-secondary: #AD845B;    /* Warm Tan - Copy Link, secondary actions */
+  --btn-create: #6B8E6B;       /* Muted Sage - Create, Add, positive actions */
+  --btn-danger: #C4756E;       /* Muted Terracotta - Delete */
+  --btn-special: #8B7093;      /* Muted Plum - Itinerary/special actions */
+}
+
+body { 
+  background: var(--trnt-bg); 
+  color: #1f2937; 
+  font-family: system-ui, -apple-system, sans-serif; 
+}
+
+.shadow-soft {
+  box-shadow: 0 10px 20px rgba(0,0,0,.06), 0 6px 6px rgba(0,0,0,.04);
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--trnt-secondary);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--trnt-accent);
+}
+
+/* Tab styling - matches Admin Portal */
+.tab-button {
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border-bottom: 2px solid transparent;
+  color: #64748b;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.tab-button:hover:not(.active) {
+  color: #334155;
+}
+
+.tab-button.active {
+  border-bottom-color: var(--trnt-accent);
+  color: var(--trnt-accent);
+}
+
+/* Edit mode indicators */
+.editable-cell {
+  position: relative;
+  cursor: text;
+  transition: background-color 0.2s;
+}
+
+.editable-cell.editing {
+  background: #fff9dc !important;
+  border: 2px solid #f59e0b !important;
+}
+
+.editable-cell.changed::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: #3b82f6;
+  border-radius: 50%;
+}
+
+/* Comparison table styling */
+#comparisonTable table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#comparisonTable th {
+  background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  vertical-align: top;
+}
+
+#comparisonTable td {
+  vertical-align: top;
+}
+
+#comparisonTable tbody tr:hover {
+  background-color: #eff6ff !important;
+}
+
+/* Disable hover highlight in client view */
+body.client-view #comparisonTable tbody tr:hover {
+  background-color: inherit !important;
+}
+
+body.client-view #comparisonTable .editable-cell:hover {
+  background-color: inherit !important;
+}
+
+#comparisonTable .sticky {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+#comparisonTable .editable-cell {
+  position: relative;
+  transition: all 0.2s;
+}
+
+#comparisonTable .editable-cell:hover {
+  background-color: #fef3c7 !important;
+}
+
+/* Option modal styling */
+#optionModal {
+  animation: fadeIn 0.2s ease-out;
+}
+
+#optionModal > div {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Toast container styling - bottom center */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Field customization modal */
+#fieldCustomizeModal {
+  animation: fadeIn 0.2s ease-out;
+}
+
+#fieldCustomizeModal > div {
+  animation: slideUp 0.3s ease-out;
+}
+
+.field-item {
+  transition: all 0.15s ease;
+}
+
+.field-item.dragging {
+  opacity: 0.5;
+}
+
+.field-item .drag-handle:hover {
+  color: #3b82f6;
+}
+
+.field-item:hover .drag-handle {
+  color: #6b7280;
+}
+
+/* Client view mode - hide admin elements */
+.client-view-hidden {
+  display: none !important;
+}
+
+/* Client view header styling */
+.client-view-header {
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.client-view-header h2 {
+  color: var(--trnt-accent);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.client-view-header p {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Hero banner - image based (matches Details Builder) */
+.hero-banner {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 200px;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #3D3732 0%, #83644D 50%, #AD845B 100%);
+}
+
+@media (min-width: 768px) {
+  .hero-banner {
+    height: 280px;
+  }
+}
+
+.hero-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-banner .hero-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.3), transparent);
+}
+
+.hero-banner .hero-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px;
+  color: white;
+}
+
+@media (min-width: 768px) {
+  .hero-banner .hero-content {
+    padding: 32px;
+  }
+}
+
+.hero-banner .hero-content h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+@media (min-width: 768px) {
+  .hero-banner .hero-content h1 {
+    font-size: 2rem;
+  }
+}
+
+.hero-banner .hero-content p {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Hero image overlay for admin editing */
+.hero-banner .image-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.hero-banner:hover .image-overlay {
+  opacity: 1;
+}
+
+/* Hide overlay in client view */
+body.client-view .hero-banner .image-overlay {
+  display: none !important;
+}
+
+/* Image modal styles */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 10001;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 100%;
+  padding: 24px;
+}
+
+/* Voting buttons styling */
+.vote-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: 2px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  gap: 0.375rem;
+}
+
+.vote-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.vote-btn.vote-yes {
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.vote-btn.vote-yes.selected {
+  border-color: #22c55e;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.vote-btn.vote-maybe {
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.vote-btn.vote-maybe.selected {
+  border-color: #eab308;
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.vote-btn.vote-no {
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.vote-btn.vote-no.selected {
+  border-color: #ef4444;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.voting-cell {
+  padding: 1rem;
+  background: #f8fafc;
+  border-top: 2px solid #e2e8f0;
+}
+
+.voting-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Admin view - vote badges on option headers */
+.vote-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+.vote-badge-yes {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.vote-badge-maybe {
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde047;
+}
+
+.vote-badge-no {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+/* Client comments box for admin view */
+.client-comments-box {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #93c5fd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.client-comments-box h4 {
+  color: #1e40af;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.client-comments-box p {
+  color: #1e3a8a;
+  font-style: italic;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Voting section - stack cards vertically */
+  .voting-section .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+  
+  .voting-card {
+    max-width: 100%;
+  }
+  
+  /* Voting buttons - horizontal on mobile for space */
+  .voting-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .vote-btn {
+    flex: 1;
+    min-width: 90px;
+    padding: 0.5rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .vote-btn .vote-emoji {
+    display: block;
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .vote-btn .vote-label {
+    font-size: 0.7rem;
+  }
+  
+  /* Table - balanced columns for mobile */
+  #comparisonTable th,
+  #comparisonTable td {
+    padding: 0.5rem !important;
+    font-size: 0.8rem;
+  }
+  
+  /* Field column - narrower on mobile */
+  #comparisonTable th.sticky,
+  #comparisonTable td.sticky {
+    min-width: 100px !important;
+    max-width: 120px !important;
+    width: 100px !important;
+  }
+  
+  /* Option columns - give them room to breathe */
+  #comparisonTable th:not(.sticky),
+  #comparisonTable td:not(.sticky) {
+    min-width: 150px !important;
+  }
+  
+  #comparisonTable .sticky {
+    min-width: 100px !important;
+  }
+  
+  /* Admin controls - wrap on mobile */
+  #editControls .flex {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  #editControls button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Header adjustments */
+  header h1 {
+    font-size: 1.25rem !important;
+  }
+  
+  header .text-sm {
+    font-size: 0.7rem;
+  }
+  
+  /* Footer buttons */
+  .p-4.bg-gray-100 {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .p-4.bg-gray-100 button {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* Even smaller screens */
+@media (max-width: 480px) {
+  .vote-btn {
+    flex-direction: column;
+    padding: 0.625rem 0.375rem;
+  }
+  
+  #comparisonTable th,
+  #comparisonTable td {
+    min-width: 120px !important;
+    font-size: 0.75rem;
+  }
+}
