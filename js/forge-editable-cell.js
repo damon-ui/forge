@@ -365,6 +365,12 @@ class EditableCell {
       this.listItems = Array.from(inputs).map(input => input.value.trim()).filter(v => v);
     }
     
+    // TRN-119: Also capture any text in the "Add new item" input
+    const newItemInput = document.getElementById(`list-new-${this.optionId}-${this.fieldKey}`);
+    if (newItemInput && newItemInput.value.trim()) {
+      this.listItems.push(newItemInput.value.trim());
+    }
+    
     // Join with comma-space for storage
     const joinedValue = this.listItems.join(', ');
     this.saveValue(joinedValue);
