@@ -445,6 +445,15 @@ class EditableCell {
       case 'number':
         return value.toString();
       default:
+        // TRN-119: Render list fields as bullet points after editing
+        const listFields = ['inclusions', 'exclusions', 'itinerary'];
+        if (listFields.includes(this.fieldKey) && typeof value === 'string' && value.includes(',')) {
+          const items = value.split(',').map(s => s.trim()).filter(s => s);
+          if (items.length > 1) {
+            return '<ul class="list-disc list-inside space-y-1 text-sm text-left">' + 
+              items.map(item => `<li>${item}</li>`).join('') + '</ul>';
+          }
+        }
         return value;
     }
   }
