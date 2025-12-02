@@ -1,7 +1,7 @@
 /**
  * FORGE - JavaScript Utility Library
- * Version: 3.1.1
- * Date: November 27, 2025
+ * Version: 3.2.0
+ * Date: December 2, 2025
  * 
  * Lightweight utility library for date formatting, price calculations, 
  * and data validation in travel applications.
@@ -13,7 +13,7 @@
  * 4. Label Generation
  * 5. Validation
  * 6. Storage Helpers (JSONBin)
- * 7. UI Helpers (Toast, Spinner, Banners)
+ * 7. UI Helpers (Toast, Spinner, Banners, Confirm Modal)
  * 8. Data Migration
  */
 
@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.1.1',
+    VERSION: '3.2.0',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -46,17 +46,11 @@ const ForgeUtils = (function() {
   // 1. DATE UTILITIES
   // ============================================
   const DateUtils = {
-    /**
-     * Format ISO date to display format
-     * @param {string} isoDate - ISO format date (YYYY-MM-DD)
-     * @param {string} format - Output format ('MM/DD/YYYY', 'MMM DD, YYYY', etc)
-     * @returns {string} Formatted date
-     */
     formatDate(isoDate, format = 'MM/DD/YYYY') {
       if (!isoDate) return '';
       
       try {
-        const date = new Date(isoDate + 'T00:00:00'); // Force UTC interpretation
+        const date = new Date(isoDate + 'T00:00:00');
         if (isNaN(date.getTime())) return isoDate;
         
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
@@ -68,13 +62,12 @@ const ForgeUtils = (function() {
         const day = date.getDate();
         const year = date.getFullYear();
         
-        // Format patterns
         const patterns = {
           'MM/DD/YYYY': `${String(month + 1).padStart(2, '0')}/${String(day).padStart(2, '0')}/${year}`,
           'MMM DD, YYYY': `${months[month]} ${day}, ${year}`,
           'MMMM DD, YYYY': `${monthsFull[month]} ${day}, ${year}`,
           'MMM DD': `${months[month]} ${day}`,
-          'YYYY-MM-DD': isoDate // ISO format
+          'YYYY-MM-DD': isoDate
         };
         
         return patterns[format] || patterns['MM/DD/YYYY'];
@@ -84,15 +77,9 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Parse any date format to ISO (YYYY-MM-DD)
-     * @param {string} dateString - Date in any common format
-     * @returns {string} ISO format date
-     */
     parseDate(dateString) {
       if (!dateString) return '';
       
-      // Already ISO format
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         return dateString;
       }
@@ -112,12 +99,6 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Format date range for display
-     * @param {string} startDate - ISO start date
-     * @param {string} endDate - ISO end date
-     * @returns {string} Formatted range (e.g., "Jun 15-27, 2026")
-     */
     formatDateRange(startDate, endDate) {
       if (!startDate || !endDate) return '';
       
@@ -139,17 +120,14 @@ const ForgeUtils = (function() {
         const startYear = start.getFullYear();
         const endYear = end.getFullYear();
         
-        // Same month and year
         if (startMonth === endMonth && startYear === endYear) {
           return `${startMonth} ${startDay}-${endDay}, ${startYear}`;
         }
         
-        // Different months, same year
         if (startYear === endYear) {
           return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${startYear}`;
         }
         
-        // Different years
         return `${startMonth} ${startDay}, ${startYear} - ${endMonth} ${endDay}, ${endYear}`;
       } catch (error) {
         console.error('Date range formatting error:', error);
@@ -157,12 +135,6 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Calculate duration in nights
-     * @param {string} startDate - ISO start date
-     * @param {string} endDate - ISO end date
-     * @returns {number} Number of nights
-     */
     calculateNights(startDate, endDate) {
       if (!startDate || !endDate) return 0;
       
@@ -178,24 +150,14 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Get current timestamp in ISO format
-     * @returns {string} Current ISO timestamp
-     */
     getCurrentTimestamp() {
       return new Date().toISOString();
     },
 
-    /**
-     * Extract year from date string
-     * @param {string} dateString - Date in any format
-     * @returns {string} Year (YYYY)
-     */
     extractYear(dateString) {
       if (!dateString) return '';
       
       try {
-        // Check if already ISO format
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
           return dateString.substring(0, 4);
         }
@@ -215,12 +177,6 @@ const ForgeUtils = (function() {
   // 2. PRICE UTILITIES
   // ============================================
   const PriceUtils = {
-    /**
-     * Format price for display
-     * @param {number} amount - Dollar amount
-     * @param {boolean} includeCents - Include cents (default: false)
-     * @returns {string} Formatted price
-     */
     formatPrice(amount, includeCents = false) {
       if (amount === null || amount === undefined || isNaN(amount)) {
         return '$0';
@@ -238,43 +194,28 @@ const ForgeUtils = (function() {
       return `$${Math.round(num).toLocaleString('en-US')}`;
     },
 
-    /**
-     * Calculate price per person
-     * @param {number} total - Total price
-     * @param {number} guests - Number of guests
-     * @returns {number} Price per person (rounded)
-     */
     calculatePricePerPerson(total, guests) {
       if (!total || !guests || guests === 0) return 0;
       return Math.round(Number(total) / Number(guests));
     },
 
-    /**
-     * Calculate grand total from pricing object
-     * @param {Object} pricing - Pricing object
-     * @returns {number} Grand total
-     */
     calculateGrandTotal(pricing) {
       if (!pricing) return 0;
       
       let total = 0;
       
-      // Add package total
       if (pricing.packageTotal) {
         total += Number(pricing.packageTotal);
       }
       
-      // Add flights
       if (pricing.flightsTotal) {
         total += Number(pricing.flightsTotal);
       }
       
-      // Add pre/post hotels
       if (pricing.prePostHotelsTotal) {
         total += Number(pricing.prePostHotelsTotal);
       }
       
-      // Add additional costs
       if (pricing.additionalCosts) {
         total += Number(pricing.additionalCosts);
       }
@@ -282,15 +223,9 @@ const ForgeUtils = (function() {
       return total;
     },
 
-    /**
-     * Parse price string to number
-     * @param {string} priceString - Price string (e.g., "$1,234.56")
-     * @returns {number} Numeric value
-     */
     parsePrice(priceString) {
       if (!priceString) return 0;
       
-      // Remove currency symbols, commas, spaces
       const cleaned = String(priceString).replace(/[$,\s]/g, '');
       const num = parseFloat(cleaned);
       
@@ -302,11 +237,6 @@ const ForgeUtils = (function() {
   // 3. METADATA UTILITIES
   // ============================================
   const MetadataUtils = {
-    /**
-     * Extract metadata from trip data
-     * @param {Object} tripData - Complete trip data object
-     * @returns {Object} Extracted metadata
-     */
     extractMetadata(tripData) {
       if (!tripData) return {};
       
@@ -333,11 +263,6 @@ const ForgeUtils = (function() {
       };
     },
 
-    /**
-     * Generate display metadata for library cards
-     * @param {Object} tripData - Trip data
-     * @returns {Object} Display-ready metadata
-     */
     generateDisplayMetadata(tripData) {
       const metadata = this.extractMetadata(tripData);
       
@@ -355,11 +280,6 @@ const ForgeUtils = (function() {
       };
     },
 
-    /**
-     * Generate subtitle from metadata
-     * @param {Object} metadata - Metadata object
-     * @returns {string} Formatted subtitle
-     */
     generateSubtitle(metadata) {
       const parts = [];
       
@@ -378,11 +298,6 @@ const ForgeUtils = (function() {
       return parts.join(' \u2022 ');
     },
 
-    /**
-     * Validate required metadata fields
-     * @param {Object} metadata - Metadata object
-     * @returns {Object} Validation result {valid: boolean, missing: string[]}
-     */
     validateMetadata(metadata) {
       const required = ['tripTitle', 'startDate', 'endDate', 'guests'];
       const missing = [];
@@ -404,16 +319,7 @@ const ForgeUtils = (function() {
   // 4. LABEL UTILITIES
   // ============================================
   const LabelUtils = {
-    /**
-     * Generate standardized bin name
-     * @param {string} year - Trip year (YYYY)
-     * @param {string} clientName - Client name
-     * @param {string} tripType - Trip type
-     * @param {number} optionNumber - Option number
-     * @returns {string} Formatted bin name
-     */
     generateBinName(year, clientName, tripType, optionNumber) {
-      // Clean and format inputs
       const cleanYear = year || new Date().getFullYear();
       const cleanClient = (clientName || 'Unknown').replace(/[^a-zA-Z0-9]/g, '');
       const cleanType = (tripType || 'Trip').replace(/[^a-zA-Z0-9]/g, '');
@@ -422,11 +328,6 @@ const ForgeUtils = (function() {
       return `${cleanYear}-${cleanClient}-${cleanType}-Option${cleanOption}`;
     },
 
-    /**
-     * Parse bin name into components
-     * @param {string} binName - Bin name to parse
-     * @returns {Object} Parsed components
-     */
     parseBinName(binName) {
       if (!binName) return {};
       
@@ -440,11 +341,6 @@ const ForgeUtils = (function() {
       };
     },
 
-    /**
-     * Generate trip label for display
-     * @param {Object} tripData - Trip data
-     * @returns {string} Display label
-     */
     generateTripLabel(tripData) {
       const metadata = MetadataUtils.extractMetadata(tripData);
       
@@ -465,11 +361,6 @@ const ForgeUtils = (function() {
   // 5. VALIDATION UTILITIES
   // ============================================
   const ValidationUtils = {
-    /**
-     * Validate trip data structure
-     * @param {Object} tripData - Trip data to validate
-     * @returns {Object} Validation result {valid: boolean, errors: string[]}
-     */
     validateTripData(tripData) {
       const errors = [];
       
@@ -478,7 +369,6 @@ const ForgeUtils = (function() {
         return { valid: false, errors };
       }
       
-      // Check metadata
       if (!tripData.metadata) {
         errors.push('Missing metadata section');
       } else {
@@ -488,14 +378,12 @@ const ForgeUtils = (function() {
         }
       }
       
-      // Check pricing
       if (!tripData.pricing) {
         errors.push('Missing pricing section');
       } else if (!tripData.pricing.grandTotal && tripData.pricing.grandTotal !== 0) {
         errors.push('Missing grand total in pricing');
       }
       
-      // Check dates are valid
       if (tripData.metadata?.startDate && tripData.metadata?.endDate) {
         const start = new Date(tripData.metadata.startDate);
         const end = new Date(tripData.metadata.endDate);
@@ -513,40 +401,23 @@ const ForgeUtils = (function() {
       };
     },
 
-    /**
-     * Validate date format (YYYY-MM-DD)
-     * @param {string} dateString - Date to validate
-     * @returns {boolean} Is valid
-     */
     isValidDate(dateString) {
       if (!dateString) return false;
       
-      // Check format
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         return false;
       }
       
-      // Check if parseable
       const date = new Date(dateString);
       return !isNaN(date.getTime());
     },
 
-    /**
-     * Validate price value
-     * @param {*} price - Price to validate
-     * @returns {boolean} Is valid
-     */
     isValidPrice(price) {
       if (price === null || price === undefined) return false;
       const num = Number(price);
       return !isNaN(num) && num >= 0;
     },
 
-    /**
-     * Validate email format
-     * @param {string} email - Email to validate
-     * @returns {boolean} Is valid
-     */
     isValidEmail(email) {
       if (!email) return false;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -558,12 +429,6 @@ const ForgeUtils = (function() {
   // 6. STORAGE UTILITIES (JSONBin)
   // ============================================
   const StorageUtils = {
-    /**
-     * Load master index from JSONBin
-     * @param {string} apiKey - JSONBin API key
-     * @param {string} indexId - Master index bin ID
-     * @returns {Promise<Object>} Master index data
-     */
     async loadMasterIndex(apiKey, indexId) {
       if (!apiKey || !indexId) {
         throw new Error('API key and index ID are required');
@@ -590,13 +455,6 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Save master index to JSONBin
-     * @param {Object} indexData - Index data to save
-     * @param {string} apiKey - JSONBin API key
-     * @param {string} indexId - Master index bin ID
-     * @returns {Promise<Object>} Response from JSONBin
-     */
     async saveMasterIndex(indexData, apiKey, indexId) {
       if (!apiKey || !indexId) {
         throw new Error('API key and index ID are required');
@@ -624,12 +482,6 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Load individual bin data
-     * @param {string} binId - Bin ID to load
-     * @param {string} apiKey - JSONBin API key
-     * @returns {Promise<Object>} Bin data
-     */
     async loadBin(binId, apiKey) {
       if (!apiKey || !binId) {
         throw new Error('API key and bin ID are required');
@@ -656,13 +508,6 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Create new bin
-     * @param {Object} data - Data to save
-     * @param {string} apiKey - JSONBin API key
-     * @param {string} binName - Optional bin name
-     * @returns {Promise<Object>} Response with new bin ID
-     */
     async createBin(data, apiKey, binName = null) {
       if (!apiKey) {
         throw new Error('API key is required');
@@ -696,13 +541,6 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Update existing bin
-     * @param {string} binId - Bin ID to update
-     * @param {Object} data - New data
-     * @param {string} apiKey - JSONBin API key
-     * @returns {Promise<Object>} Response from JSONBin
-     */
     async updateBin(binId, data, apiKey) {
       if (!apiKey || !binId) {
         throw new Error('API key and bin ID are required');
@@ -730,12 +568,6 @@ const ForgeUtils = (function() {
       }
     },
 
-    /**
-     * Delete bin
-     * @param {string} binId - Bin ID to delete
-     * @param {string} apiKey - JSONBin API key
-     * @returns {Promise<Object>} Response from JSONBin
-     */
     async deleteBin(binId, apiKey) {
       if (!apiKey || !binId) {
         throw new Error('API key and bin ID are required');
@@ -766,17 +598,9 @@ const ForgeUtils = (function() {
   // 7. UI UTILITIES
   // ============================================
   const UIUtils = {
-    // Store banner callbacks
     _bannerCallbacks: {},
 
-    /**
-     * Show toast notification
-     * @param {string} message - Message to display
-     * @param {string} type - Toast type: 'success', 'error', 'info', 'warning'
-     * @param {number} duration - Duration in ms (default: 3000)
-     */
     showToast(message, type = 'info', duration = 3000) {
-      // Create or get toast container - STANDARDIZED POSITION: bottom center
       let container = document.getElementById('forge-toast-container');
       if (!container) {
         container = document.createElement('div');
@@ -841,11 +665,6 @@ const ForgeUtils = (function() {
       }, duration);
     },
 
-    /**
-     * Show loading spinner
-     * @param {string} message - Optional loading message
-     * @returns {HTMLElement} Spinner element (call .remove() to hide)
-     */
     showSpinner(message = 'Loading...') {
       const spinner = document.createElement('div');
       spinner.id = 'forge-spinner';
@@ -883,9 +702,6 @@ const ForgeUtils = (function() {
       return spinner;
     },
 
-    /**
-     * Hide loading spinner
-     */
     hideSpinner() {
       const spinner = document.getElementById('forge-spinner');
       if (spinner) {
@@ -896,11 +712,27 @@ const ForgeUtils = (function() {
     /**
      * Show confirmation dialog
      * @param {string} message - Message to display
-     * @param {string} confirmText - Confirm button text (default: 'OK')
-     * @param {string} cancelText - Cancel button text (default: 'Cancel')
+     * @param {Object} options - Configuration options
+     * @param {string} options.confirmText - Confirm button text (default: 'OK')
+     * @param {string} options.cancelText - Cancel button text (default: 'Cancel')
+     * @param {boolean} options.danger - Use danger styling (default: false)
      * @returns {Promise<boolean>} User's choice
      */
-    showConfirm(message, confirmText = 'OK', cancelText = 'Cancel') {
+    showConfirm(message, options = {}) {
+      // Support old signature: showConfirm(message, confirmText, cancelText)
+      if (typeof options === 'string') {
+        options = { confirmText: options, cancelText: arguments[2] || 'Cancel' };
+      }
+      
+      const { 
+        confirmText = 'OK', 
+        cancelText = 'Cancel',
+        danger = false 
+      } = options;
+      
+      // Earth-tone palette colors
+      const btnColor = danger ? '#C4756E' : '#3D3732'; // Terracotta for danger, Brown for normal
+      
       return new Promise((resolve) => {
         const modal = document.createElement('div');
         modal.style.cssText = `
@@ -914,6 +746,7 @@ const ForgeUtils = (function() {
           align-items: center;
           justify-content: center;
           z-index: 10000;
+          animation: forgeSlideUp 0.2s ease-out;
         `;
         
         modal.innerHTML = `
@@ -924,6 +757,7 @@ const ForgeUtils = (function() {
             box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
             max-width: 400px;
             width: 90%;
+            animation: forgeSlideUp 0.2s ease-out;
           ">
             <p style="
               margin: 0 0 24px 0;
@@ -947,17 +781,19 @@ const ForgeUtils = (function() {
                 font-size: 14px;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 font-weight: 500;
+                transition: background 0.15s;
               ">${cancelText}</button>
               <button id="forge-confirm-ok" style="
                 padding: 10px 20px;
                 border: none;
-                background: #3b82f6;
+                background: ${btnColor};
                 color: white;
                 border-radius: 6px;
                 cursor: pointer;
                 font-size: 14px;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
                 font-weight: 500;
+                transition: opacity 0.15s;
               ">${confirmText}</button>
             </div>
           </div>
@@ -965,18 +801,34 @@ const ForgeUtils = (function() {
         
         document.body.appendChild(modal);
         
+        // Add hover effects
+        const okBtn = modal.querySelector('#forge-confirm-ok');
+        const cancelBtn = modal.querySelector('#forge-confirm-cancel');
+        okBtn.addEventListener('mouseenter', () => okBtn.style.opacity = '0.9');
+        okBtn.addEventListener('mouseleave', () => okBtn.style.opacity = '1');
+        cancelBtn.addEventListener('mouseenter', () => cancelBtn.style.background = '#f3f4f6');
+        cancelBtn.addEventListener('mouseleave', () => cancelBtn.style.background = 'white');
+        
         const cleanup = () => {
           modal.remove();
         };
         
-        document.getElementById('forge-confirm-ok').addEventListener('click', () => {
+        okBtn.addEventListener('click', () => {
           cleanup();
           resolve(true);
         });
         
-        document.getElementById('forge-confirm-cancel').addEventListener('click', () => {
+        cancelBtn.addEventListener('click', () => {
           cleanup();
           resolve(false);
+        });
+        
+        // Click outside to cancel
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            cleanup();
+            resolve(false);
+          }
         });
         
         // Allow ESC to cancel
@@ -988,14 +840,12 @@ const ForgeUtils = (function() {
           }
         };
         document.addEventListener('keydown', escHandler);
+        
+        // Focus the cancel button for keyboard accessibility
+        cancelBtn.focus();
       });
     },
 
-    /**
-     * Animate element entrance
-     * @param {HTMLElement} element - Element to animate
-     * @param {string} animation - Animation type: 'fadeIn', 'slideIn', 'scaleIn'
-     */
     animateIn(element, animation = 'fadeIn') {
       const animations = {
         fadeIn: 'opacity 0.3s ease-in',
@@ -1037,24 +887,13 @@ const ForgeUtils = (function() {
     // BANNER SYSTEM (v3.1.0)
     // ==========================================
 
-    /**
-     * Initialize view mode banner system
-     * Injects CSS and HTML for admin/preview banners
-     * @param {Object} options - Configuration
-     * @param {Function} options.onEnterPreview - Callback when entering preview mode
-     * @param {Function} options.onExitPreview - Callback when exiting to admin mode
-     * @param {string} options.insertInto - CSS selector for container to insert banners at top of
-     */
     initBanners(options = {}) {
-      // Store callbacks
       this._bannerCallbacks = options;
       
-      // Inject CSS if not already present
       if (!document.getElementById('forge-banner-styles')) {
         const style = document.createElement('style');
         style.id = 'forge-banner-styles';
         style.textContent = `
-          /* FORGE Banner System */
           .forge-banner-admin,
           .forge-banner-preview {
             padding: 1rem 1.5rem;
@@ -1064,19 +903,16 @@ const ForgeUtils = (function() {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           }
           
-          /* Hidden state - must override display */
           .forge-banner-admin.hidden,
           .forge-banner-preview.hidden {
             display: none !important;
           }
           
-          /* Admin Banner - TRNT Brown */
           .forge-banner-admin {
             background: #83644D;
             color: white;
           }
           
-          /* Preview Banner - Amber/Yellow */
           .forge-banner-preview {
             background: #fef3c7;
             border-bottom: 2px solid #fcd34d;
@@ -1099,7 +935,6 @@ const ForgeUtils = (function() {
             border: none;
           }
           
-          /* Admin banner button (light on dark) */
           .forge-banner-admin .forge-banner-btn {
             background: rgba(255, 255, 255, 0.2);
             color: white;
@@ -1108,7 +943,6 @@ const ForgeUtils = (function() {
             background: rgba(255, 255, 255, 0.3);
           }
           
-          /* Preview banner button (amber) */
           .forge-banner-preview .forge-banner-btn {
             background: #d97706;
             color: white;
@@ -1117,7 +951,6 @@ const ForgeUtils = (function() {
             background: #b45309;
           }
           
-          /* Mobile adjustments */
           @media (max-width: 640px) {
             .forge-banner-admin,
             .forge-banner-preview {
@@ -1135,7 +968,6 @@ const ForgeUtils = (function() {
         document.head.appendChild(style);
       }
       
-      // Inject HTML if not already present
       if (!document.getElementById('forgeBannerAdmin')) {
         const adminBanner = document.createElement('div');
         adminBanner.id = 'forgeBannerAdmin';
@@ -1157,26 +989,21 @@ const ForgeUtils = (function() {
           </button>
         `;
         
-        // Determine where to insert banners
         let container = null;
         let insertBeforeEl = null;
         
         if (options.insertInto) {
-          // Insert at top of specified container
           container = document.querySelector(options.insertInto);
           if (container) {
             insertBeforeEl = container.firstChild;
           }
         }
         
-        // Fallback to body if no container specified or found
         if (!container) {
           container = document.body;
           insertBeforeEl = document.body.firstChild;
         }
         
-        // Insert preview banner first, then admin banner before it
-        // This ensures admin banner is on top when both would be visible
         container.insertBefore(previewBanner, insertBeforeEl);
         container.insertBefore(adminBanner, previewBanner);
       }
@@ -1184,10 +1011,6 @@ const ForgeUtils = (function() {
       console.log('%c\u{1F6A9} FORGE Banner System initialized', 'color: #83644D; font-weight: bold;');
     },
 
-    /**
-     * Set view mode and update banner visibility
-     * @param {string} mode - 'admin', 'preview', or 'client'
-     */
     setViewMode(mode) {
       if (!['admin', 'preview', 'client'].includes(mode)) {
         console.warn('Invalid view mode:', mode);
@@ -1204,11 +1027,9 @@ const ForgeUtils = (function() {
         return;
       }
       
-      // Hide both first
       adminBanner.classList.add('hidden');
       previewBanner.classList.add('hidden');
       
-      // Show appropriate banner and fire callback
       if (mode === 'admin') {
         adminBanner.classList.remove('hidden');
         if (this._bannerCallbacks?.onExitPreview) {
@@ -1220,31 +1041,18 @@ const ForgeUtils = (function() {
           this._bannerCallbacks.onEnterPreview();
         }
       }
-      // 'client' mode = both hidden, no callback needed
       
       console.log('%c\u{1F6A9} View mode:', 'color: #83644D;', mode);
     },
 
-    /**
-     * Get current view mode
-     * @returns {string} Current mode ('admin', 'preview', or 'client')
-     */
     getViewMode() {
       return currentViewMode;
     },
 
-    /**
-     * Check if currently in admin mode
-     * @returns {boolean}
-     */
     isAdminMode() {
       return currentViewMode === 'admin';
     },
 
-    /**
-     * Check if currently in any client-facing mode (preview or client)
-     * @returns {boolean}
-     */
     isClientFacing() {
       return currentViewMode === 'preview' || currentViewMode === 'client';
     }
@@ -1254,13 +1062,7 @@ const ForgeUtils = (function() {
   // 8. DATA MIGRATION UTILITIES
   // ============================================
   const MigrationUtils = {
-    /**
-     * Migrate old format to v3.0 unified format
-     * @param {Object} oldData - Data in old format
-     * @returns {Object} Data in v3.0 format
-     */
     migrateToV3(oldData) {
-      // If already v3.0+, return as-is
       if (oldData.metadata?.version && oldData.metadata.version >= '3.0.0') {
         return oldData;
       }
@@ -1280,11 +1082,6 @@ const ForgeUtils = (function() {
       return migrated;
     },
 
-    /**
-     * Migrate metadata section
-     * @param {Object} oldData - Old data
-     * @returns {Object} Migrated metadata
-     */
     migrateMetadata(oldData) {
       const metadata = oldData.metadata || {};
       
@@ -1302,15 +1099,9 @@ const ForgeUtils = (function() {
       };
     },
 
-    /**
-     * Migrate pricing section
-     * @param {Object} oldData - Old data
-     * @returns {Object} Migrated pricing
-     */
     migratePricing(oldData) {
       const pricing = oldData.pricing || {};
       
-      // Calculate grand total if missing
       let grandTotal = pricing.grandTotal;
       if (!grandTotal) {
         grandTotal = PriceUtils.calculateGrandTotal(pricing);
@@ -1329,11 +1120,6 @@ const ForgeUtils = (function() {
       };
     },
 
-    /**
-     * Migrate hotels section
-     * @param {Object} oldData - Old data
-     * @returns {Array} Migrated hotels
-     */
     migrateHotels(oldData) {
       if (!oldData.hotels || !Array.isArray(oldData.hotels)) {
         return [];
@@ -1346,26 +1132,14 @@ const ForgeUtils = (function() {
       }));
     },
 
-    /**
-     * Migrate display metadata
-     * @param {Object} oldData - Old data
-     * @returns {Object} Display metadata
-     */
     migrateDisplayMetadata(oldData) {
-      // If already exists, use it
       if (oldData.displayMetadata) {
         return oldData.displayMetadata;
       }
       
-      // Generate from old data
       return MetadataUtils.generateDisplayMetadata(oldData);
     },
 
-    /**
-     * Batch migrate multiple trip options
-     * @param {Array} options - Array of trip options
-     * @returns {Array} Migrated options
-     */
     batchMigrate(options) {
       if (!Array.isArray(options)) {
         return [];
@@ -1437,7 +1211,6 @@ const ForgeUtils = (function() {
     document.head.appendChild(style);
   };
 
-  // Initialize animations when DOM loads
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', addAnimations);
   } else {
@@ -1448,10 +1221,7 @@ const ForgeUtils = (function() {
   // PUBLIC API
   // ============================================
   return {
-    // Configuration
     CONFIG,
-    
-    // Utility modules
     Date: DateUtils,
     Price: PriceUtils,
     Metadata: MetadataUtils,
@@ -1460,15 +1230,11 @@ const ForgeUtils = (function() {
     Storage: StorageUtils,
     UI: UIUtils,
     Migration: MigrationUtils,
-    
-    // Version
     version: CONFIG.VERSION
   };
 })();
 
-// Make available globally
 window.ForgeUtils = ForgeUtils;
 
-// Console message
 console.log(`%c\u{1F525} FORGE v${ForgeUtils.version} Loaded`, 
   'color: #83644D; font-weight: bold; font-size: 14px;');
