@@ -170,7 +170,7 @@ body.embed-mode #forgeEmbedSaveBar {
 
       // Detect embed mode from URL param
       const urlParams = new URLSearchParams(window.location.search);
-      this.isEmbedded = urlParams.get('embed') === 'true';
+      this.isEmbedded = urlParams.get('embed') === 'true' || urlParams.get('embed') === '1';
 
       if (this.isEmbedded) {
         console.log('[ForgeEmbed] Running in embed mode');
