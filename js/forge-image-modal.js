@@ -202,6 +202,58 @@ const ForgeImageModal = (function() {
     if (resultsDiv) resultsDiv.innerHTML = '';
   }
 
+  // ===== HTML TEMPLATE =====
+
+  function getModalHTML(options = {}) {
+    const modalId = options.modalId || 'imageModal';
+    const title = options.title || 'Select Image';
+
+    return `
+      <div id="${modalId}" class="modal-backdrop">
+        <div class="modal-content">
+          <h3 data-modal-title style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">${title}</h3>
+
+          <!-- URL Input -->
+          <div style="margin-bottom: 1rem;">
+            <label class="form-label">Paste Image URL</label>
+            <input type="text" data-image-url class="form-input" placeholder="https://..." />
+          </div>
+
+          <!-- File Upload -->
+          <div style="margin-bottom: 1rem;">
+            <label class="form-label">Or Upload Image</label>
+            <input type="file" data-file-input accept="image/*" onchange="ForgeImageModal.handleFileUpload(event)"
+                   style="width: 100%; font-size: 0.875rem;" />
+            <div data-upload-status class="text-xs mt-1 text-center"></div>
+          </div>
+
+          <!-- Unsplash Search Toggle -->
+          <button type="button" onclick="ForgeImageModal.toggleUnsplashSearch()"
+                  class="btn btn-outline" style="width: 100%; margin-bottom: 0.75rem;">
+            Search Unsplash
+          </button>
+
+          <!-- Unsplash Panel (hidden by default) -->
+          <div data-unsplash-panel class="hidden unsplash-search-container">
+            <div class="unsplash-search-input">
+              <input type="text" data-unsplash-query placeholder="Search free photos..."
+                     onkeydown="if(event.key==='Enter'){ForgeImageModal.searchUnsplash();}" />
+              <button type="button" data-unsplash-search-btn onclick="ForgeImageModal.searchUnsplash()">Search</button>
+            </div>
+            <div data-unsplash-results></div>
+            <p class="unsplash-credit">Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a></p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+            <button type="button" onclick="ForgeImageModal.close()" class="btn btn-outline" style="flex: 1;">Cancel</button>
+            <button type="button" onclick="ForgeImageModal.save()" class="btn btn-primary" style="flex: 1;">Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   return {
     init,
     open,
@@ -210,7 +262,8 @@ const ForgeImageModal = (function() {
     handleFileUpload,
     toggleUnsplashSearch,
     searchUnsplash,
-    selectUnsplashImage
+    selectUnsplashImage,
+    getModalHTML
   };
 
 })();
