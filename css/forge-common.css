@@ -167,11 +167,22 @@ body {
   align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
+  list-style: none;
 }
 
 .list-item-icon {
   flex-shrink: 0;
   margin-top: 2px;
+}
+
+/* Parent containers that hold list-items - reset list styles */
+#highlightsList,
+#inclusionsList,
+#exclusionsList,
+#importantInfoList {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
 }
 
 /* ===========================================
@@ -217,7 +228,34 @@ body {
   [data-section-id].footer { display: none !important; }
 
   /* Hide common tool elements */
-  .modal-backdrop, .toast, #forge-toast-container, .forge-banner { display: none !important; }
+  .modal-backdrop, .toast, #toast-container, #forge-toast-container, .forge-banner { display: none !important; }
+
+  /* Hide admin headers and PDF buttons (shared across tools) */
+  #adminHeader, .pdf-download-section, .image-overlay { display: none !important; }
+
+  /* Remove Squarespace wrapper padding */
+  .content-wrapper, .page-section, .sqs-layout {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Reset mobile full-width hacks (shared pattern) */
+  #mainContent, #mainContainer {
+    position: static !important;
+    width: 100% !important;
+    left: auto !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 !important;
+  }
+
+  .hero-section {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    border-radius: 0.5rem !important;
+  }
 }
 
 /* ===== Unsplash Image Search ===== */

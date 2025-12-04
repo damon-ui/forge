@@ -1,0 +1,252 @@
+# Claude Code Task: Create forge-common.css
+
+## Overview
+Extract common CSS from TRNT Travel tools into a centralized `forge-common.css` file.
+
+## Repo
+`~/Documents/forge`
+
+## Output File
+`css/forge-common.css`
+
+---
+
+## CSS to Extract
+
+### 1. CSS Variables (copy from any tool)
+```css
+:root {
+  --trnt-bg: #EBE3DA;
+  --trnt-accent: #3D3732;
+  --trnt-secondary: #83644D;
+  --trnt-secondary2: #AD845B;
+  --trnt-border: #90867C;
+  --trnt-link: #5EA9D8;
+  
+  /* Button palette - Earth tones (approved Nov 28, 2025) */
+  --btn-primary: #3D3732;
+  --btn-secondary: #AD845B;
+  --btn-create: #6B8E6B;
+  --btn-danger: #C4756E;
+  --btn-special: #8B7093;
+}
+```
+
+### 2. Base Body Styles
+```css
+body { 
+  background: var(--trnt-bg); 
+  color: #1f2937; 
+  font-family: system-ui, -apple-system, sans-serif; 
+}
+```
+
+### 3. Utility Classes
+```css
+.shadow-soft {
+  box-shadow: 0 10px 20px rgba(0,0,0,.06), 0 6px 6px rgba(0,0,0,.04);
+}
+```
+
+### 4. Editable Field Styles
+```css
+.editable {
+  cursor: pointer;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.editable:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  outline: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.editable.editing {
+  background-color: #fef9c3 !important;
+  outline: 2px solid #3b82f6 !important;
+}
+
+.editable-input {
+  background-color: #fef9c3;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font: inherit;
+  color: inherit;
+}
+
+.editable-textarea {
+  background-color: #fef9c3;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+}
+```
+
+### 5. Section Card Styles
+```css
+.section-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--trnt-border);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.section-header:hover {
+  background-color: #f9fafb;
+}
+
+.section-content {
+  padding: 0 24px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.section-content.collapsed {
+  display: none;
+}
+```
+
+### 6. Modal Styles
+```css
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.modal-backdrop.active {
+  display: flex;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 100%;
+  padding: 24px;
+}
+```
+
+### 7. Loading Spinner
+```css
+.loading-spinner {
+  border: 3px solid #e5e7eb;
+  border-top-color: var(--trnt-accent);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+```
+
+### 8. List Item Styles
+```css
+.list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.list-item-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+```
+
+### 9. Standard Button Styles
+```css
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn:hover { opacity: 0.9; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary { background: var(--btn-primary); color: white; }
+.btn-secondary { background: var(--btn-secondary); color: white; }
+.btn-create { background: var(--btn-create); color: white; }
+.btn-danger { background: var(--btn-danger); color: white; }
+.btn-special { background: var(--btn-special); color: white; }
+.btn-outline { background: white; border: 1px solid var(--trnt-border); color: var(--trnt-accent); }
+```
+
+### 10. Print/PDF Base Styles
+```css
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background: white !important; }
+  
+  /* Hide Squarespace chrome */
+  header, .header, .Header,
+  footer, .footer, .Footer,
+  .header-announcement-bar-wrapper,
+  .site-header, .site-footer,
+  [data-section-id].header,
+  [data-section-id].footer { display: none !important; }
+  
+  /* Hide common tool elements */
+  .modal-backdrop, .toast, #forge-toast-container, .forge-banner { display: none !important; }
+}
+```
+
+---
+
+## File Header
+Add this at the top of the file:
+```css
+/**
+ * FORGE Common CSS
+ * Shared styles for TRNT Travel tools
+ * 
+ * @version 1.0.0
+ * CDN: https://cdn.jsdelivr.net/gh/damon-ui/forge@main/css/forge-common.css
+ */
+```
+
+---
+
+## After Creating File
+1. Commit: `git add css/forge-common.css && git commit -m "feat: add forge-common.css for shared tool styles"`
+2. Push: `git push`
+3. Verify CDN: `https://cdn.jsdelivr.net/gh/damon-ui/forge@main/css/forge-common.css`
+
+---
+
+## Next Step
+After CSS file is created and pushed, we'll refactor Details Builder to use it as the test case.
