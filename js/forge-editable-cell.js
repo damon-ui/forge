@@ -1,12 +1,12 @@
 /**
  * FORGE EditableCell Component
  * Inline editing system for comparison tables
- * 
- * @version 1.0.0
+ *
+ * @version 1.0.1
  * @requires AppState (global) - tool's state object with editMode, changes, originalData
  * @requires COMPARISON_FIELDS (global) - field definitions array
- * @requires formatDate() (global) - date formatting function
- * @requires formatPrice() (global) - price formatting function
+ * @requires ForgeUtils.Date.formatDate() - date formatting function
+ * @requires ForgeUtils.Price.formatPrice() - price formatting function
  * @requires window.ForgeUtils - FORGE utility library
  */
 
@@ -445,9 +445,9 @@ class EditableCell {
     
     switch(this.fieldType) {
       case 'date':
-        return formatDate(value);
+        return ForgeUtils.Date.formatDate(value);
       case 'price':
-        return formatPrice(value);
+        return ForgeUtils.Price.formatPrice(value);
       case 'number':
         return value.toString();
       default:
@@ -571,7 +571,7 @@ class EditableCell {
     
     // Format and display (handle 0 as valid value)
     if (field.type === 'calculated-price') {
-      cell.innerHTML = formatPrice(newValue);
+      cell.innerHTML = ForgeUtils.Price.formatPrice(newValue);
     } else {
       const isEmpty = newValue === '' || newValue === null || newValue === undefined;
       cell.innerHTML = isEmpty ? '<span class="text-gray-400 italic">N/A</span>' : newValue;
