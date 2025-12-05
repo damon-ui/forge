@@ -22,6 +22,7 @@ const ForgeDetailModal = (function() {
 
     const title = options.title || 'Details';
     const photo = options.photo || '';
+    const content = options.content || '';
     const features = options.features || [];
 
     // Set modal title
@@ -40,6 +41,11 @@ const ForgeDetailModal = (function() {
       `;
     }
 
+    // Custom HTML content (if provided)
+    if (content) {
+      contentHTML += `<div class="mb-4">${content}</div>`;
+    }
+
     // Features list
     if (features.length > 0) {
       contentHTML += `
@@ -53,7 +59,7 @@ const ForgeDetailModal = (function() {
           `).join('')}
         </ul>
       `;
-    } else {
+    } else if (!content && !photo) {
       contentHTML += `<p class="text-gray-500 italic text-sm">No details available.</p>`;
     }
 
