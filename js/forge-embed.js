@@ -250,9 +250,18 @@ body.embed-mode #forgeEmbedSaveBar {
      * Notify parent that the tool is ready to receive commands
      */
     notifyReady() {
-      this.notifyParent('forge:ready', { 
-        binId: this.config?.currentBinId 
+      this.notifyParent('forge:ready', {
+        binId: this.config?.currentBinId
       });
+    },
+
+    /**
+     * Notify parent of content height for dynamic iframe resizing
+     */
+    notifyHeight() {
+      if (!this.isEmbedded) return;
+      const height = document.body.scrollHeight;
+      this.notifyParent('forge:resize', { height });
     },
 
     // =====================================================
@@ -331,7 +340,20 @@ body.embed-mode #forgeEmbedSaveBar {
       });
 
       // Notify parent we're ready (with small delay to ensure DOM is ready)
-      setTimeout(() => this.notifyReady(), 100);
+      setTimeout(() => {
+        this.notifyReady();
+        // Send initial height after DOM settles
+        setTimeout(() => this.notifyHeight(), 50);
+      }, 100);
+
+      // Set up ResizeObserver to detect content changes and notify parent
+      if (typeof ResizeObserver !== 'undefined') {
+        this._resizeObserver = new ResizeObserver(() => {
+          this.notifyHeight();
+        });
+        this._resizeObserver.observe(document.body);
+        console.log('[ForgeEmbed] ResizeObserver attached for dynamic height');
+      }
     },
 
     _bindSaveBarEvents() {
