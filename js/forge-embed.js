@@ -1,14 +1,14 @@
 /**
  * FORGE Embed Mode Module
  * Provides iframe embedding support for TRNT Travel tools
- * 
- * @version 1.0.0
+ *
+ * @version 1.0.1
  * @author TRNT Travel Tools
- * 
+ *
  * USAGE:
  * 1. Include this script in your tool's HTML:
  *    <script src="https://cdn.jsdelivr.net/gh/damon-ui/forge@main/js/forge-embed.js"></script>
- * 
+ *
  * 2. Initialize with configuration in your DOMContentLoaded:
  *    ForgeEmbed.init({
  *      onSave: async () => { ... },
@@ -20,7 +20,7 @@
  *      hideSelectors: ['#adminHeader', '#somePanel'],
  *      showPdfButton: true
  *    });
- * 
+ *
  * 3. Call ForgeEmbed.notifyDirty(true/false) when changes occur
  * 4. Call ForgeEmbed.notifySaved(binId, title, clientName) after successful save
  */
@@ -134,6 +134,7 @@ body.embed-mode #forgeEmbedSaveBar {
     parentOrigin: null,
     config: null,
     _initialized: false,
+    _isBuilderPage: false,
 
     /**
      * Initialize embed mode
@@ -172,14 +173,22 @@ body.embed-mode #forgeEmbedSaveBar {
       const urlParams = new URLSearchParams(window.location.search);
       this.isEmbedded = urlParams.get('embed') === 'true' || urlParams.get('embed') === '1';
 
+      // Detect if this is the Builder page (skip save bar for Builder)
+      this._isBuilderPage = window.location.pathname.includes('builder');
+
       if (this.isEmbedded) {
         console.log('[ForgeEmbed] Running in embed mode');
         this._injectCSS();
-        this._injectSaveBar();
+        // Skip save bar for Builder - it creates new options, doesn't edit existing ones
+        if (!this._isBuilderPage) {
+          this._injectSaveBar();
+          this._bindSaveBarEvents();
+        } else {
+          console.log('[ForgeEmbed] Builder page detected - skipping save bar');
+        }
         this._applyHideClasses();
         document.body.classList.add('embed-mode');
         this._initMessaging();
-        this._bindSaveBarEvents();
       } else {
         console.log('[ForgeEmbed] Not in embed mode, skipping initialization');
       }
@@ -239,9 +248,9 @@ body.embed-mode #forgeEmbedSaveBar {
      * @param {boolean} hasUnsavedChanges - Whether there are unsaved changes
      */
     notifyDirty(hasUnsavedChanges) {
-      this.notifyParent('forge:dirty', { 
-        binId: this.config?.currentBinId, 
-        hasUnsavedChanges 
+      this.notifyParent('forge:dirty', {
+        binId: this.config?.currentBinId,
+        hasUnsavedChanges
       });
       this._updateSaveBar(hasUnsavedChanges);
     },
@@ -283,19 +292,19 @@ body.embed-mode #forgeEmbedSaveBar {
 
       // Insert save bar before closing body tag
       document.body.insertAdjacentHTML('beforeend', SAVE_BAR_HTML);
-      
+
       // Hide PDF button if configured
       if (!this.config.showPdfButton) {
         const pdfBtn = document.querySelector('#forgeEmbedSaveBar .embed-btn-pdf');
         if (pdfBtn) pdfBtn.style.display = 'none';
       }
-      
+
       // Hide Save As New button if configured
       if (!this.config.showSaveAsNew) {
         const saveAsBtn = document.querySelector('#forgeEmbedSaveBar .embed-btn-saveas');
         if (saveAsBtn) saveAsBtn.style.display = 'none';
       }
-      
+
       console.log('[ForgeEmbed] Save bar injected');
     },
 
@@ -314,7 +323,7 @@ body.embed-mode #forgeEmbedSaveBar {
         // Validate origin - accept same domain family
         const currentDomain = window.location.hostname.split('.').slice(-2).join('.');
         const eventDomain = new URL(event.origin).hostname.split('.').slice(-2).join('.');
-        
+
         if (currentDomain !== eventDomain) {
           console.warn('[ForgeEmbed] Message from unknown origin:', event.origin);
           return;
@@ -366,11 +375,11 @@ body.embed-mode #forgeEmbedSaveBar {
         if (!btn || btn.disabled) return;
 
         const action = btn.dataset.action;
-        
+
         // Disable button during operation to prevent double-clicks
         btn.disabled = true;
         const originalText = btn.textContent;
-        
+
         try {
           switch (action) {
             case 'save':
