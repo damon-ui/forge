@@ -2,7 +2,7 @@
  * FORGE Embed Mode Module
  * Provides iframe embedding support for TRNT Travel tools
  *
- * @version 1.0.1
+ * @version 1.1.0
  * @author TRNT Travel Tools
  *
  * USAGE:
@@ -189,6 +189,8 @@ body.embed-mode #forgeEmbedSaveBar {
         this._applyHideClasses();
         document.body.classList.add('embed-mode');
         this._initMessaging();
+        // Initialize scroll-aware sticky toolbar positioning
+        this._initEmbedStickyToolbar();
       } else {
         console.log('[ForgeEmbed] Not in embed mode, skipping initialization');
       }
@@ -430,6 +432,78 @@ body.embed-mode #forgeEmbedSaveBar {
 
       if (saveBtn) saveBtn.disabled = !hasChanges;
       if (revertBtn) revertBtn.disabled = !hasChanges;
+    },
+
+    // =====================================================
+    // STICKY TOOLBAR POSITIONING FOR EMBED MODE
+    // =====================================================
+
+    /**
+     * Initialize scroll-aware sticky toolbar positioning for embed mode
+     * In embed mode, position: fixed doesn't work because the iframe auto-sizes
+     * to content height. This repositions the toolbar based on parent scroll.
+     */
+    _initEmbedStickyToolbar() {
+      if (!this.isEmbedded) return;
+
+      const toolbar = document.querySelector('.forge-sticky-toolbar');
+      if (!toolbar) {
+        console.log('[ForgeEmbed] No .forge-sticky-toolbar found');
+        return;
+      }
+
+      console.log('[ForgeEmbed] Initializing scroll-aware sticky toolbar');
+
+      // Switch from fixed to absolute positioning so we can control it
+      toolbar.style.position = 'absolute';
+      toolbar.style.bottom = 'auto';
+
+      const repositionToolbar = () => {
+        try {
+          const iframeRect = window.frameElement?.getBoundingClientRect();
+          if (!iframeRect) return;
+
+          const parentViewportHeight = window.parent.innerHeight;
+          const toolbarHeight = toolbar.offsetHeight;
+
+          // Where is the bottom of the parent viewport relative to our iframe?
+          const viewportBottomInIframe = parentViewportHeight - iframeRect.top;
+
+          // Clamp to iframe bounds
+          const iframeHeight = document.documentElement.scrollHeight;
+          const targetBottom = Math.min(viewportBottomInIframe, iframeHeight);
+          const targetTop = Math.max(0, targetBottom - toolbarHeight);
+
+          toolbar.style.top = targetTop + 'px';
+        } catch (e) {
+          // Cross-origin issues - fall back to bottom of iframe
+          console.log('[ForgeEmbed] Cross-origin fallback for toolbar');
+          toolbar.style.position = 'fixed';
+          toolbar.style.bottom = '0';
+          toolbar.style.top = 'auto';
+        }
+      };
+
+      // Listen to parent scroll and resize
+      try {
+        window.parent.addEventListener('scroll', repositionToolbar, { passive: true });
+        window.parent.addEventListener('resize', repositionToolbar, { passive: true });
+        console.log('[ForgeEmbed] Parent scroll/resize listeners attached');
+      } catch (e) {
+        console.log('[ForgeEmbed] Could not attach parent listeners (cross-origin)');
+      }
+
+      // Initial position
+      repositionToolbar();
+
+      // Also reposition when iframe content changes height
+      if (typeof ResizeObserver !== 'undefined') {
+        const resizeObserver = new ResizeObserver(repositionToolbar);
+        resizeObserver.observe(document.body);
+      }
+
+      // Store reference for potential cleanup
+      this._repositionToolbar = repositionToolbar;
     }
   };
 
