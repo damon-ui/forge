@@ -304,3 +304,153 @@ body {
   font-size: 0.875rem;
   background: white;
 }
+
+/* ===========================================
+   11. Sticky Toolbar (TRN-199)
+   =========================================== */
+.forge-sticky-toolbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--trnt-border);
+  box-shadow: 0 -4px 6px rgba(0,0,0,0.07);
+  padding: 12px 16px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Toolbar buttons */
+.forge-sticky-toolbar .toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.forge-sticky-toolbar .toolbar-btn:hover {
+  opacity: 0.9;
+}
+
+.forge-sticky-toolbar .toolbar-btn:active {
+  transform: scale(0.98);
+}
+
+.forge-sticky-toolbar .toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Button color variants */
+.forge-sticky-toolbar .toolbar-btn-save {
+  background: var(--btn-create);
+  color: white;
+}
+
+.forge-sticky-toolbar .toolbar-btn-secondary {
+  background: var(--btn-secondary);
+  color: white;
+}
+
+.forge-sticky-toolbar .toolbar-btn-primary {
+  background: var(--btn-primary);
+  color: white;
+}
+
+.forge-sticky-toolbar .toolbar-btn-special {
+  background: var(--btn-special);
+  color: white;
+}
+
+.forge-sticky-toolbar .toolbar-btn-danger {
+  background: var(--btn-danger);
+  color: white;
+}
+
+.forge-sticky-toolbar .toolbar-btn-outline {
+  background: white;
+  border: 1px solid var(--trnt-border);
+  color: var(--trnt-accent);
+}
+
+.forge-sticky-toolbar .toolbar-btn-outline:hover {
+  background: #f9fafb;
+}
+
+/* Divider for visual grouping */
+.forge-sticky-toolbar .toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--trnt-border);
+  margin: 0 4px;
+}
+
+/* Status indicator (e.g., "Unsaved changes") */
+.forge-sticky-toolbar .toolbar-status {
+  font-size: 13px;
+  color: var(--trnt-secondary);
+  margin-right: 8px;
+}
+
+.forge-sticky-toolbar .toolbar-status.has-changes {
+  color: #d97706;
+  font-weight: 500;
+}
+
+/* Hide Back to Admin in embed mode */
+body.embed-mode .toolbar-btn-back {
+  display: none !important;
+}
+
+/* Ensure content doesn't get hidden behind sticky toolbar */
+.has-sticky-toolbar {
+  padding-bottom: 70px !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .forge-sticky-toolbar {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .forge-sticky-toolbar .toolbar-btn {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  .forge-sticky-toolbar .toolbar-divider {
+    display: none;
+  }
+
+  .forge-sticky-toolbar .toolbar-status {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+}
+
+/* Print: hide sticky toolbar */
+@media print {
+  .forge-sticky-toolbar {
+    display: none !important;
+  }
+
+  .has-sticky-toolbar {
+    padding-bottom: 0 !important;
+  }
+}
