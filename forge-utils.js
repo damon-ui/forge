@@ -607,7 +607,7 @@ const ForgeUtils = (function() {
         container.id = 'forge-toast-container';
         container.style.cssText = `
           position: fixed;
-          bottom: 20px;
+          top: 20px;
           left: 50%;
           transform: translateX(-50%);
           z-index: 10000;
@@ -642,7 +642,7 @@ const ForgeUtils = (function() {
         padding: 16px 24px;
         border-radius: 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        animation: forgeSlideUp 0.3s ease-out;
+        animation: forgeSlideDown 0.3s ease-out;
         max-width: 400px;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         font-size: 14px;
@@ -660,7 +660,7 @@ const ForgeUtils = (function() {
       container.appendChild(toast);
       
       setTimeout(() => {
-        toast.style.animation = 'forgeSlideDown 0.3s ease-in';
+        toast.style.animation = 'forgeSlideUp 0.3s ease-in';
         setTimeout(() => toast.remove(), 300);
       }, duration);
     },
@@ -1182,23 +1182,23 @@ const ForgeUtils = (function() {
       
       @keyframes forgeSlideUp {
         from {
-          transform: translateY(100%);
-          opacity: 0;
-        }
-        to {
           transform: translateY(0);
           opacity: 1;
+        }
+        to {
+          transform: translateY(-100%);
+          opacity: 0;
         }
       }
-      
+
       @keyframes forgeSlideDown {
         from {
-          transform: translateY(0);
-          opacity: 1;
+          transform: translateY(-100%);
+          opacity: 0;
         }
         to {
-          transform: translateY(100%);
-          opacity: 0;
+          transform: translateY(0);
+          opacity: 1;
         }
       }
       
