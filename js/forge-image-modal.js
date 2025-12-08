@@ -25,10 +25,6 @@ const ForgeImageModal = (function() {
   function open(options = {}) {
     if (!modalElement) return;
 
-    // TRN-201: Save scroll position and scroll to top for modal visibility in embed mode
-    this._savedScrollY = window.scrollY;
-    window.scrollTo({ top: 0, behavior: 'instant' });
-
     currentCallback = options.onSave || null;
 
     const urlInput = modalElement.querySelector('[data-image-url]');
@@ -41,15 +37,29 @@ const ForgeImageModal = (function() {
     resetUnsplashSearch();
 
     modalElement.classList.add('active');
+
+    // TRN-201: In iframe, position modal at current viewport center
+    if (window.self !== window.top) {
+      const modalContent = modalElement.querySelector('.modal-content');
+      if (modalContent) {
+        modalContent.style.position = 'absolute';
+        modalContent.style.top = (window.scrollY + (window.innerHeight / 2)) + 'px';
+        modalContent.style.transform = 'translate(-50%, -50%)';
+        modalContent.style.left = '50%';
+      }
+    }
   }
 
   function close() {
     if (!modalElement) return;
 
-    // TRN-201: Restore scroll position
-    if (typeof this._savedScrollY === 'number') {
-      window.scrollTo({ top: this._savedScrollY, behavior: 'instant' });
-      this._savedScrollY = undefined;
+    // TRN-201: Reset modal positioning
+    const modalContent = modalElement.querySelector('.modal-content');
+    if (modalContent) {
+      modalContent.style.position = '';
+      modalContent.style.top = '';
+      modalContent.style.transform = '';
+      modalContent.style.left = '';
     }
 
     modalElement.classList.remove('active');
