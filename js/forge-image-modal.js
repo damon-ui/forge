@@ -38,14 +38,15 @@ const ForgeImageModal = (function() {
 
     modalElement.classList.add('active');
 
-    // TRN-201: In iframe, position modal at current viewport center
-    if (window.self !== window.top) {
+    // TRN-201: In embed mode, position modal at current viewport center
+    const isEmbed = new URLSearchParams(window.location.search).get('embed') !== null;
+    if (isEmbed) {
       const modalContent = modalElement.querySelector('.modal-content');
       if (modalContent) {
         modalContent.style.position = 'absolute';
         modalContent.style.top = (window.scrollY + (window.innerHeight / 2)) + 'px';
-        modalContent.style.transform = 'translate(-50%, -50%)';
         modalContent.style.left = '50%';
+        modalContent.style.transform = 'translate(-50%, -50%)';
       }
     }
   }
