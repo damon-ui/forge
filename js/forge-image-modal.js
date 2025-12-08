@@ -41,6 +41,10 @@ const ForgeImageModal = (function() {
     // TRN-201: In embed mode, position modal at current viewport center
     const isEmbed = new URLSearchParams(window.location.search).get('embed') !== null;
     if (isEmbed) {
+      // Disable flexbox centering on backdrop so we can position manually
+      modalElement.style.alignItems = 'flex-start';
+      modalElement.style.justifyContent = 'flex-start';
+
       const modalContent = modalElement.querySelector('.modal-content');
       if (modalContent) {
         modalContent.style.position = 'absolute';
@@ -54,13 +58,16 @@ const ForgeImageModal = (function() {
   function close() {
     if (!modalElement) return;
 
-    // TRN-201: Reset modal positioning
+    // TRN-201: Reset modal positioning (backdrop and content)
+    modalElement.style.alignItems = '';
+    modalElement.style.justifyContent = '';
+
     const modalContent = modalElement.querySelector('.modal-content');
     if (modalContent) {
       modalContent.style.position = '';
       modalContent.style.top = '';
-      modalContent.style.transform = '';
       modalContent.style.left = '';
+      modalContent.style.transform = '';
     }
 
     modalElement.classList.remove('active');
