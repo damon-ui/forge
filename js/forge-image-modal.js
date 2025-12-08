@@ -25,6 +25,10 @@ const ForgeImageModal = (function() {
   function open(options = {}) {
     if (!modalElement) return;
 
+    // TRN-201: Save scroll position and scroll to top for modal visibility in embed mode
+    this._savedScrollY = window.scrollY;
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
     currentCallback = options.onSave || null;
 
     const urlInput = modalElement.querySelector('[data-image-url]');
@@ -41,6 +45,13 @@ const ForgeImageModal = (function() {
 
   function close() {
     if (!modalElement) return;
+
+    // TRN-201: Restore scroll position
+    if (typeof this._savedScrollY === 'number') {
+      window.scrollTo({ top: this._savedScrollY, behavior: 'instant' });
+      this._savedScrollY = undefined;
+    }
+
     modalElement.classList.remove('active');
     currentCallback = null;
   }
