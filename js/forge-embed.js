@@ -2,7 +2,7 @@
  * FORGE Embed Mode Module
  * Provides iframe embedding support for TRNT Travel tools
  *
- * @version 1.1.0
+ * @version 2.0.0
  * @author TRNT Travel Tools
  *
  * USAGE:
@@ -11,18 +11,15 @@
  *
  * 2. Initialize with configuration in your DOMContentLoaded:
  *    ForgeEmbed.init({
- *      onSave: async () => { ... },
- *      onSaveAsNew: async () => { ... },
- *      onRevert: async () => { ... },
- *      onExportPDF: () => { ... },
+ *      hideSelectors: ['#adminHeader', '.toolbar-btn-back'],
  *      onLoad: (binId) => { ... },
- *      onRefresh: () => { ... },
- *      hideSelectors: ['#adminHeader', '#somePanel'],
- *      showPdfButton: true
+ *      onRefresh: () => { ... }
  *    });
  *
  * 3. Call ForgeEmbed.notifyDirty(true/false) when changes occur
  * 4. Call ForgeEmbed.notifySaved(binId, title, clientName) after successful save
+ *
+ * NOTE: v2.0.0 removes injected toolbar - tools now use native .forge-sticky-toolbar
  */
 
 (function(global) {
@@ -36,93 +33,9 @@
    FORGE EMBED MODE STYLES
    =========================================== */
 body.embed-mode .forge-embed-hide { display: none !important; }
-body.embed-mode .max-w-7xl { max-width: 100%; padding: 1rem; padding-bottom: 80px; }
+body.embed-mode .max-w-7xl { max-width: 100%; padding: 1rem; }
 body.embed-mode .modal-backdrop { padding: 8px; }
 body.embed-mode .modal-content { max-height: 85vh; overflow-y: auto; }
-
-/* Floating save bar for embed mode */
-#forgeEmbedSaveBar {
-  display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-top: 1px solid var(--trnt-border, #90867C);
-  padding: 12px 16px;
-  z-index: 50;
-  box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
-}
-
-body.embed-mode #forgeEmbedSaveBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-#forgeEmbedSaveBar .embed-status {
-  font-size: 14px;
-  color: var(--trnt-secondary, #90867C);
-}
-
-#forgeEmbedSaveBar .embed-status.has-changes {
-  color: #d97706;
-  font-weight: 500;
-}
-
-#forgeEmbedSaveBar .embed-actions {
-  display: flex;
-  gap: 8px;
-}
-
-#forgeEmbedSaveBar .embed-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-#forgeEmbedSaveBar .embed-btn:hover { opacity: 0.9; }
-#forgeEmbedSaveBar .embed-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-#forgeEmbedSaveBar .embed-btn-save {
-  background: var(--btn-create, #6B8E6B);
-  color: white;
-}
-
-#forgeEmbedSaveBar .embed-btn-saveas {
-  background: var(--btn-secondary, #AD845B);
-  color: white;
-}
-
-#forgeEmbedSaveBar .embed-btn-revert {
-  background: white;
-  border: 1px solid #d1d5db;
-  color: #374151;
-}
-
-#forgeEmbedSaveBar .embed-btn-pdf {
-  background: var(--btn-special, #8B7093);
-  color: white;
-}
-`;
-
-  // =====================================================
-  // EMBED SAVE BAR HTML TEMPLATE
-  // =====================================================
-  const SAVE_BAR_HTML = `
-<div id="forgeEmbedSaveBar">
-  <span class="embed-status">All changes saved</span>
-  <div class="embed-actions">
-    <button class="embed-btn embed-btn-save" data-action="save" disabled>Save Changes</button>
-    <button class="embed-btn embed-btn-saveas" data-action="saveas">Save As New</button>
-    <button class="embed-btn embed-btn-revert" data-action="revert" disabled>Revert</button>
-    <button class="embed-btn embed-btn-pdf" data-action="pdf">Export PDF</button>
-  </div>
-</div>
 `;
 
   // =====================================================
@@ -134,20 +47,13 @@ body.embed-mode #forgeEmbedSaveBar {
     parentOrigin: null,
     config: null,
     _initialized: false,
-    _isBuilderPage: false,
 
     /**
      * Initialize embed mode
      * @param {Object} config - Configuration options
-     * @param {Function} config.onSave - Handler for save button click
-     * @param {Function} config.onSaveAsNew - Handler for save as new button click
-     * @param {Function} config.onRevert - Handler for revert button click
-     * @param {Function} config.onExportPDF - Handler for export PDF button click
      * @param {Function} config.onLoad - Handler for load command from parent (receives binId)
      * @param {Function} config.onRefresh - Handler for refresh command from parent
      * @param {Array<string>} config.hideSelectors - CSS selectors for elements to hide in embed mode
-     * @param {boolean} config.showPdfButton - Whether to show the PDF export button (default: true)
-     * @param {boolean} config.showSaveAsNew - Whether to show Save As New button (default: true)
      * @param {string} config.currentBinId - Current bin ID for notifications (optional)
      */
     init(config = {}) {
@@ -157,15 +63,9 @@ body.embed-mode #forgeEmbedSaveBar {
       }
 
       this.config = {
-        onSave: config.onSave || (() => console.warn('[ForgeEmbed] No onSave handler configured')),
-        onSaveAsNew: config.onSaveAsNew || (() => console.warn('[ForgeEmbed] No onSaveAsNew handler configured')),
-        onRevert: config.onRevert || (() => console.warn('[ForgeEmbed] No onRevert handler configured')),
-        onExportPDF: config.onExportPDF || (() => console.warn('[ForgeEmbed] No onExportPDF handler configured')),
         onLoad: config.onLoad || null,
         onRefresh: config.onRefresh || null,
         hideSelectors: config.hideSelectors || ['#adminHeader'],
-        showPdfButton: config.showPdfButton !== false,
-        showSaveAsNew: config.showSaveAsNew !== false,
         currentBinId: config.currentBinId || null
       };
 
@@ -173,19 +73,9 @@ body.embed-mode #forgeEmbedSaveBar {
       const urlParams = new URLSearchParams(window.location.search);
       this.isEmbedded = urlParams.get('embed') === 'true' || urlParams.get('embed') === '1';
 
-      // Detect if this is the Builder page (skip save bar for Builder)
-      this._isBuilderPage = window.location.pathname.includes('builder');
-
       if (this.isEmbedded) {
         console.log('[ForgeEmbed] Running in embed mode');
         this._injectCSS();
-        // Skip save bar for Builder - it creates new options, doesn't edit existing ones
-        if (!this._isBuilderPage) {
-          this._injectSaveBar();
-          this._bindSaveBarEvents();
-        } else {
-          console.log('[ForgeEmbed] Builder page detected - skipping save bar');
-        }
         this._applyHideClasses();
         document.body.classList.add('embed-mode');
         this._initMessaging();
@@ -254,7 +144,6 @@ body.embed-mode #forgeEmbedSaveBar {
         binId: this.config?.currentBinId,
         hasUnsavedChanges
       });
-      this._updateSaveBar(hasUnsavedChanges);
     },
 
     /**
@@ -287,27 +176,6 @@ body.embed-mode #forgeEmbedSaveBar {
       styleEl.textContent = EMBED_CSS;
       document.head.appendChild(styleEl);
       console.log('[ForgeEmbed] CSS injected');
-    },
-
-    _injectSaveBar() {
-      if (document.getElementById('forgeEmbedSaveBar')) return;
-
-      // Insert save bar before closing body tag
-      document.body.insertAdjacentHTML('beforeend', SAVE_BAR_HTML);
-
-      // Hide PDF button if configured
-      if (!this.config.showPdfButton) {
-        const pdfBtn = document.querySelector('#forgeEmbedSaveBar .embed-btn-pdf');
-        if (pdfBtn) pdfBtn.style.display = 'none';
-      }
-
-      // Hide Save As New button if configured
-      if (!this.config.showSaveAsNew) {
-        const saveAsBtn = document.querySelector('#forgeEmbedSaveBar .embed-btn-saveas');
-        if (saveAsBtn) saveAsBtn.style.display = 'none';
-      }
-
-      console.log('[ForgeEmbed] Save bar injected');
     },
 
     _applyHideClasses() {
@@ -365,73 +233,6 @@ body.embed-mode #forgeEmbedSaveBar {
         this._resizeObserver.observe(document.body);
         console.log('[ForgeEmbed] ResizeObserver attached for dynamic height');
       }
-    },
-
-    _bindSaveBarEvents() {
-      const saveBar = document.getElementById('forgeEmbedSaveBar');
-      if (!saveBar) return;
-
-      // Use event delegation for button clicks
-      saveBar.addEventListener('click', async (e) => {
-        const btn = e.target.closest('.embed-btn');
-        if (!btn || btn.disabled) return;
-
-        const action = btn.dataset.action;
-
-        // Disable button during operation to prevent double-clicks
-        btn.disabled = true;
-        const originalText = btn.textContent;
-
-        try {
-          switch (action) {
-            case 'save':
-              btn.textContent = 'Saving...';
-              await this.config.onSave();
-              break;
-            case 'saveas':
-              btn.textContent = 'Creating...';
-              await this.config.onSaveAsNew();
-              break;
-            case 'revert':
-              await this.config.onRevert();
-              break;
-            case 'pdf':
-              btn.textContent = 'Exporting...';
-              await this.config.onExportPDF();
-              break;
-          }
-        } catch (error) {
-          console.error('[ForgeEmbed] Action failed:', action, error);
-        } finally {
-          btn.textContent = originalText;
-          // Re-enable based on current dirty state
-          // Save and Revert should stay disabled if no changes
-          if (action !== 'save' && action !== 'revert') {
-            btn.disabled = false;
-          }
-        }
-      });
-
-      console.log('[ForgeEmbed] Save bar events bound');
-    },
-
-    _updateSaveBar(hasChanges) {
-      const status = document.querySelector('#forgeEmbedSaveBar .embed-status');
-      const saveBtn = document.querySelector('#forgeEmbedSaveBar .embed-btn-save');
-      const revertBtn = document.querySelector('#forgeEmbedSaveBar .embed-btn-revert');
-
-      if (status) {
-        if (hasChanges) {
-          status.textContent = 'You have unsaved changes';
-          status.classList.add('has-changes');
-        } else {
-          status.textContent = 'All changes saved';
-          status.classList.remove('has-changes');
-        }
-      }
-
-      if (saveBtn) saveBtn.disabled = !hasChanges;
-      if (revertBtn) revertBtn.disabled = !hasChanges;
     },
 
     // =====================================================
@@ -513,6 +314,6 @@ body.embed-mode #forgeEmbedSaveBar {
   global.ForgeEmbed = ForgeEmbed;
 
   // Log availability
-  console.log('[ForgeEmbed] Module loaded - call ForgeEmbed.init(config) to initialize');
+  console.log('[ForgeEmbed] Module loaded v2.0.0 - call ForgeEmbed.init(config) to initialize');
 
 })(typeof window !== 'undefined' ? window : this);
