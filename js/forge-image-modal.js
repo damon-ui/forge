@@ -38,19 +38,31 @@ const ForgeImageModal = (function() {
 
     modalElement.classList.add('active');
 
-    // TRN-201: In embed mode, position modal at current viewport center
+    // TRN-201: In embed mode, anchor modal to clicked element
     const isEmbed = new URLSearchParams(window.location.search).get('embed') !== null;
     if (isEmbed) {
-      // Disable flexbox centering on backdrop so we can position manually
+      // Stop flexbox from forcing vertical center
       modalElement.style.alignItems = 'flex-start';
-      modalElement.style.justifyContent = 'flex-start';
 
+      // Find where the user clicked
+      const trigger = options.triggerElement || document.activeElement;
+      let targetTop = 100; // Default fallback
+
+      if (trigger && trigger.getBoundingClientRect) {
+        const rect = trigger.getBoundingClientRect();
+        // Position modal near the clicked element
+        targetTop = Math.max(20, rect.top + (rect.height / 2) - 150);
+      }
+
+      // Apply positioning to the content box
       const modalContent = modalElement.querySelector('.modal-content');
       if (modalContent) {
-        modalContent.style.position = 'absolute';
-        modalContent.style.top = (window.scrollY + (window.innerHeight / 2)) + 'px';
-        modalContent.style.left = '50%';
-        modalContent.style.transform = 'translate(-50%, -50%)';
+        modalContent.style.margin = '0 auto';
+        modalContent.style.marginTop = targetTop + 'px';
+        modalContent.style.position = 'relative';
+        modalContent.style.top = 'auto';
+        modalContent.style.left = 'auto';
+        modalContent.style.transform = 'none';
       }
     }
   }
@@ -60,10 +72,11 @@ const ForgeImageModal = (function() {
 
     // TRN-201: Reset modal positioning (backdrop and content)
     modalElement.style.alignItems = '';
-    modalElement.style.justifyContent = '';
 
     const modalContent = modalElement.querySelector('.modal-content');
     if (modalContent) {
+      modalContent.style.margin = '';
+      modalContent.style.marginTop = '';
       modalContent.style.position = '';
       modalContent.style.top = '';
       modalContent.style.left = '';

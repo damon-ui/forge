@@ -454,3 +454,17 @@ body.embed-mode .toolbar-btn-back {
     padding-bottom: 0 !important;
   }
 }
+
+/* ===========================================
+   12. TRN-201: Fix for Tall Iframes (Embed Mode)
+   =========================================== */
+body.embed-mode {
+  position: relative;
+}
+
+body.embed-mode .modal-backdrop {
+  position: absolute !important;
+  height: 100% !important;
+  inset: 0 !important;
+  align-items: flex-start;
+}
