@@ -89,12 +89,7 @@ const ForgeImageModal = (function() {
 
   function save() {
     const urlInput = modalElement?.querySelector('[data-image-url]');
-    const url = urlInput?.value?.trim();
-
-    if (!url) {
-      ForgeUtils.UI.showToast('Please enter an image URL', 'error');
-      return;
-    }
+    const url = urlInput?.value?.trim() || ''; // TRN-210: Allow empty URL to clear photo
 
     if (currentCallback) {
       currentCallback(url);
