@@ -601,6 +601,21 @@ const ForgeUtils = (function() {
     _bannerCallbacks: {},
 
     showToast(message, type = 'info', duration = 3000) {
+      // TRN-205: If embedded in iframe, post message to parent to render toast there
+      if (window.self !== window.top) {
+        window.parent.postMessage({
+          type: 'FORGE_TOAST',
+          payload: { message, type, duration }
+        }, '*');
+        return;
+      }
+
+      // Render toast locally (standalone mode)
+      this._renderToast(message, type, duration);
+    },
+
+    // Internal method to render toast in current window
+    _renderToast(message, type = 'info', duration = 3000) {
       let container = document.getElementById('forge-toast-container');
       if (!container) {
         container = document.createElement('div');
@@ -619,23 +634,23 @@ const ForgeUtils = (function() {
         `;
         document.body.appendChild(container);
       }
-      
+
       const toast = document.createElement('div');
-      
+
       const colors = {
         success: '#10b981',
         error: '#ef4444',
         info: '#3b82f6',
         warning: '#f59e0b'
       };
-      
+
       const icons = {
         success: CONFIG.EMOJI.CHECK,
         error: CONFIG.EMOJI.ERROR,
         info: '\u{2139}\uFE0F',
         warning: CONFIG.EMOJI.WARNING
       };
-      
+
       toast.style.cssText = `
         background: ${colors[type] || colors.info};
         color: white;
@@ -651,14 +666,14 @@ const ForgeUtils = (function() {
         gap: 12px;
         pointer-events: auto;
       `;
-      
+
       toast.innerHTML = `
         <span style="font-size: 20px;">${icons[type] || icons.info}</span>
         <span>${message}</span>
       `;
-      
+
       container.appendChild(toast);
-      
+
       setTimeout(() => {
         toast.style.animation = 'forgeSlideUp 0.3s ease-in';
         setTimeout(() => toast.remove(), 300);
