@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.0',
+    VERSION: '3.2.16',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -1165,6 +1165,143 @@ const ForgeUtils = (function() {
   };
 
   // ============================================
+  // 9. DATA NORMALIZATION UTILITIES (TRN-215)
+  // ============================================
+  const DataUtils = {
+    /**
+     * Normalize flights array to canonical nested segments[] format
+     * Handles both nested (ForgeBuilder) and flat (legacy) formats
+     * @param {Array} flights - Array of flight objects
+     * @returns {Array} - Normalized flights with segments[] structure
+     */
+    normalizeFlights(flights) {
+      if (!flights || !Array.isArray(flights)) {
+        return [];
+      }
+
+      return flights.map(flight => {
+        // Already in nested format with segments - return as-is
+        if (flight.segments && Array.isArray(flight.segments) && flight.segments.length > 0) {
+          return flight;
+        }
+
+        // Flat format - convert to nested segments[]
+        if (flight.from || flight.to || flight.departAirport || flight.arriveAirport) {
+          return {
+            type: flight.type || 'outbound',
+            segments: [{
+              departure: flight.from || flight.departAirport || '',
+              arrival: flight.to || flight.arriveAirport || '',
+              date: flight.date || '',
+              departTime: flight.departTime || flight.time || '',
+              arriveTime: flight.arriveTime || '',
+              airline: flight.airline || '',
+              flightNumber: flight.flightNumber || ''
+            }],
+            notes: flight.notes || '',
+            arrivesNextDay: flight.arrivesNextDay || false
+          };
+        }
+
+        // Unknown format - return as-is with empty segments
+        console.warn('Unknown flight format:', flight);
+        return {
+          ...flight,
+          segments: flight.segments || []
+        };
+      });
+    },
+
+    /**
+     * Get summary string for a flight (all segments)
+     * Example: "CLT → DFW → LAS" or "CLT → LAS"
+     * @param {Object} flight - Flight object with segments[]
+     * @returns {string} - Route summary
+     */
+    getFlightRouteSummary(flight) {
+      if (!flight) return '';
+
+      const segments = flight.segments || [];
+      if (segments.length === 0) {
+        // Fallback to flat fields
+        if (flight.from && flight.to) {
+          return `${flight.from} \u2192 ${flight.to}`;
+        }
+        return '';
+      }
+
+      // Build route from segments: first departure + all arrivals
+      const route = [segments[0].departure];
+      segments.forEach(seg => {
+        if (seg.arrival) route.push(seg.arrival);
+      });
+
+      return route.join(' \u2192 ');
+    },
+
+    /**
+     * Calculate total layover time for multi-segment flight
+     * @param {Object} flight - Flight object with segments[]
+     * @returns {number} - Total layover minutes (0 if single segment)
+     */
+    calculateLayoverTime(flight) {
+      if (!flight || !flight.segments || flight.segments.length < 2) {
+        return 0;
+      }
+
+      let totalLayover = 0;
+      for (let i = 0; i < flight.segments.length - 1; i++) {
+        const currentSeg = flight.segments[i];
+        const nextSeg = flight.segments[i + 1];
+
+        if (currentSeg.arriveTime && nextSeg.departTime) {
+          const arriveMinutes = this._timeToMinutes(currentSeg.arriveTime);
+          const departMinutes = this._timeToMinutes(nextSeg.departTime);
+
+          if (arriveMinutes !== null && departMinutes !== null) {
+            let layover = departMinutes - arriveMinutes;
+            // Handle overnight layover
+            if (layover < 0) layover += 24 * 60;
+            totalLayover += layover;
+          }
+        }
+      }
+
+      return totalLayover;
+    },
+
+    /**
+     * Format layover time as human-readable string
+     * @param {number} minutes - Layover time in minutes
+     * @returns {string} - Formatted string like "1h 30m"
+     */
+    formatLayoverTime(minutes) {
+      if (!minutes || minutes <= 0) return '';
+
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+
+      if (hours === 0) return `${mins}m`;
+      if (mins === 0) return `${hours}h`;
+      return `${hours}h ${mins}m`;
+    },
+
+    /**
+     * Convert HH:MM time string to minutes since midnight
+     * @private
+     */
+    _timeToMinutes(timeStr) {
+      if (!timeStr) return null;
+      const parts = timeStr.split(':');
+      if (parts.length < 2) return null;
+      const hours = parseInt(parts[0], 10);
+      const mins = parseInt(parts[1], 10);
+      if (isNaN(hours) || isNaN(mins)) return null;
+      return hours * 60 + mins;
+    }
+  };
+
+  // ============================================
   // ADD ANIMATIONS TO DOM
   // ============================================
   const addAnimations = () => {
@@ -1245,6 +1382,7 @@ const ForgeUtils = (function() {
     Storage: StorageUtils,
     UI: UIUtils,
     Migration: MigrationUtils,
+    Data: DataUtils,
     version: CONFIG.VERSION
   };
 })();
