@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.16',
+    VERSION: '3.2.17',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -1070,6 +1070,379 @@ const ForgeUtils = (function() {
 
     isClientFacing() {
       return currentViewMode === 'preview' || currentViewMode === 'client';
+    },
+
+    // ==========================================
+    // TOOLTIP SYSTEM (v3.2.17)
+    // ==========================================
+
+    /**
+     * Initialize tooltips for icon-only buttons
+     * Scans for buttons with only <i> or <svg> children and adds title attributes
+     * @param {Object} options - Configuration options
+     * @param {string} options.selector - CSS selector for buttons to scan (default: 'button')
+     * @param {Object} options.mappings - Custom icon class to tooltip text mappings
+     * @param {boolean} options.useOnclick - Also infer from onclick handler names (default: true)
+     */
+    initTooltips(options = {}) {
+      const {
+        selector = 'button',
+        mappings = {},
+        useOnclick = true
+      } = options;
+
+      // Default icon class to tooltip mappings
+      const defaultMappings = {
+        // Font Awesome style
+        'fa-edit': 'Edit',
+        'fa-pencil': 'Edit',
+        'fa-trash': 'Delete',
+        'fa-trash-alt': 'Delete',
+        'fa-save': 'Save',
+        'fa-floppy-disk': 'Save',
+        'fa-plus': 'Add',
+        'fa-minus': 'Remove',
+        'fa-times': 'Close',
+        'fa-xmark': 'Close',
+        'fa-check': 'Confirm',
+        'fa-copy': 'Copy',
+        'fa-clone': 'Duplicate',
+        'fa-eye': 'View',
+        'fa-eye-slash': 'Hide',
+        'fa-search': 'Search',
+        'fa-magnifying-glass': 'Search',
+        'fa-refresh': 'Refresh',
+        'fa-arrows-rotate': 'Refresh',
+        'fa-cog': 'Settings',
+        'fa-gear': 'Settings',
+        'fa-download': 'Download',
+        'fa-upload': 'Upload',
+        'fa-share': 'Share',
+        'fa-link': 'Copy Link',
+        'fa-external-link': 'Open',
+        'fa-arrow-up-right-from-square': 'Open',
+        'fa-chevron-up': 'Move Up',
+        'fa-chevron-down': 'Move Down',
+        'fa-chevron-left': 'Previous',
+        'fa-chevron-right': 'Next',
+        'fa-expand': 'Expand',
+        'fa-compress': 'Collapse',
+        'fa-info': 'Info',
+        'fa-circle-info': 'Info',
+        'fa-question': 'Help',
+        'fa-circle-question': 'Help',
+        // Lucide/Heroicons style (used in some tools)
+        'lucide-edit': 'Edit',
+        'lucide-trash': 'Delete',
+        'lucide-save': 'Save',
+        'lucide-plus': 'Add',
+        'lucide-x': 'Close',
+        'lucide-check': 'Confirm',
+        'lucide-copy': 'Copy',
+        'lucide-eye': 'View',
+        'lucide-settings': 'Settings',
+        ...mappings
+      };
+
+      // Handler name patterns to tooltip mappings
+      const handlerPatterns = {
+        'edit': 'Edit',
+        'delete': 'Delete',
+        'remove': 'Remove',
+        'save': 'Save',
+        'add': 'Add',
+        'create': 'Create',
+        'close': 'Close',
+        'cancel': 'Cancel',
+        'confirm': 'Confirm',
+        'copy': 'Copy',
+        'duplicate': 'Duplicate',
+        'view': 'View',
+        'preview': 'Preview',
+        'refresh': 'Refresh',
+        'reload': 'Reload',
+        'toggle': 'Toggle',
+        'expand': 'Expand',
+        'collapse': 'Collapse',
+        'upload': 'Upload',
+        'download': 'Download',
+        'share': 'Share',
+        'moveUp': 'Move Up',
+        'moveDown': 'Move Down'
+      };
+
+      const buttons = document.querySelectorAll(selector);
+      let tooltipsAdded = 0;
+
+      buttons.forEach(button => {
+        // Skip if already has a title
+        if (button.title) return;
+
+        // Check if this is an icon-only button
+        const children = Array.from(button.childNodes).filter(node => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent.trim().length > 0;
+          }
+          return node.nodeType === Node.ELEMENT_NODE;
+        });
+
+        // Only process if button contains just icon element(s) and no text
+        const hasTextContent = children.some(node =>
+          node.nodeType === Node.TEXT_NODE ||
+          (node.nodeType === Node.ELEMENT_NODE &&
+           !['I', 'SVG', 'SPAN'].includes(node.tagName) &&
+           node.textContent.trim().length > 0)
+        );
+
+        if (hasTextContent) return;
+
+        const iconEl = button.querySelector('i, svg');
+        if (!iconEl) return;
+
+        let tooltip = null;
+
+        // Try to find tooltip from icon class
+        if (iconEl.tagName === 'I') {
+          const classes = Array.from(iconEl.classList);
+          for (const cls of classes) {
+            if (defaultMappings[cls]) {
+              tooltip = defaultMappings[cls];
+              break;
+            }
+            // Check for partial matches (e.g., fa-solid fa-edit -> fa-edit)
+            const shortClass = cls.replace(/^(fa-solid|fa-regular|fa-light|fa-thin|fa-duotone)\s*/, '');
+            if (defaultMappings[shortClass]) {
+              tooltip = defaultMappings[shortClass];
+              break;
+            }
+          }
+        }
+
+        // Try to infer from onclick handler
+        if (!tooltip && useOnclick) {
+          const onclick = button.getAttribute('onclick') || '';
+          for (const [pattern, text] of Object.entries(handlerPatterns)) {
+            const regex = new RegExp(pattern, 'i');
+            if (regex.test(onclick)) {
+              tooltip = text;
+              break;
+            }
+          }
+        }
+
+        // Try to infer from aria-label
+        if (!tooltip && button.getAttribute('aria-label')) {
+          tooltip = button.getAttribute('aria-label');
+        }
+
+        // Try to infer from data-action attribute
+        if (!tooltip && button.dataset.action) {
+          const action = button.dataset.action;
+          tooltip = action.charAt(0).toUpperCase() + action.slice(1).replace(/([A-Z])/g, ' $1');
+        }
+
+        if (tooltip) {
+          button.title = tooltip;
+          tooltipsAdded++;
+        }
+      });
+
+      console.log(`%c\u{1F4AC} FORGE Tooltips: Added ${tooltipsAdded} tooltips`, 'color: #83644D;');
+      return tooltipsAdded;
+    },
+
+    // ==========================================
+    // LAST SAVED INDICATOR (v3.2.17)
+    // ==========================================
+
+    _lastSavedState: {
+      timestamp: null,
+      element: null,
+      intervalId: null,
+      unsaved: true
+    },
+
+    /**
+     * Initialize the "Last saved" indicator
+     * @param {Object} options - Configuration options
+     * @param {string} options.containerSelector - CSS selector for container to insert into (default: '.forge-sticky-toolbar')
+     * @param {string} options.position - Where to insert: 'start', 'end', 'before-save', 'after-save' (default: 'start')
+     * @param {string} options.saveButtonSelector - CSS selector for save button (for 'before-save'/'after-save' positions)
+     * @param {number} options.updateInterval - How often to update display in ms (default: 30000)
+     * @param {string} options.unsavedText - Text to show when not saved (default: 'Not saved yet')
+     * @param {Function} options.onInit - Callback after initialization
+     */
+    initLastSaved(options = {}) {
+      const {
+        containerSelector = '.forge-sticky-toolbar',
+        position = 'start',
+        saveButtonSelector = '[data-action="save"], button[onclick*="save" i], .save-btn',
+        updateInterval = 30000,
+        unsavedText = 'Not saved yet',
+        onInit = null
+      } = options;
+
+      // Clean up any existing instance
+      this._cleanupLastSaved();
+
+      const container = document.querySelector(containerSelector);
+      if (!container) {
+        console.warn('[ForgeUtils] Last saved: Container not found:', containerSelector);
+        return null;
+      }
+
+      // Create the indicator element
+      const indicator = document.createElement('span');
+      indicator.id = 'forge-last-saved';
+      indicator.className = 'forge-last-saved';
+      indicator.style.cssText = `
+        font-size: 0.75rem;
+        color: #6b7280;
+        padding: 0.25rem 0.5rem;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 0.25rem;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      `;
+
+      // Insert at the specified position
+      let inserted = false;
+      if (position === 'before-save' || position === 'after-save') {
+        const saveBtn = container.querySelector(saveButtonSelector);
+        if (saveBtn) {
+          if (position === 'before-save') {
+            saveBtn.parentNode.insertBefore(indicator, saveBtn);
+          } else {
+            saveBtn.parentNode.insertBefore(indicator, saveBtn.nextSibling);
+          }
+          inserted = true;
+        }
+      }
+
+      if (!inserted) {
+        if (position === 'end') {
+          container.appendChild(indicator);
+        } else {
+          container.insertBefore(indicator, container.firstChild);
+        }
+      }
+
+      // Store state
+      this._lastSavedState = {
+        timestamp: null,
+        element: indicator,
+        intervalId: null,
+        unsaved: true,
+        unsavedText
+      };
+
+      // Initial render
+      this._updateLastSavedDisplay();
+
+      // Set up auto-update interval
+      this._lastSavedState.intervalId = setInterval(() => {
+        this._updateLastSavedDisplay();
+      }, updateInterval);
+
+      console.log('%c\u{23F0} FORGE Last Saved indicator initialized', 'color: #83644D;');
+
+      if (onInit) onInit(indicator);
+      return indicator;
+    },
+
+    /**
+     * Mark as saved - call this after a successful save
+     * @param {Date|number|string} timestamp - When saved (default: now)
+     */
+    markSaved(timestamp = null) {
+      if (!this._lastSavedState.element) {
+        console.warn('[ForgeUtils] Last saved: Not initialized. Call initLastSaved() first.');
+        return;
+      }
+
+      this._lastSavedState.timestamp = timestamp ? new Date(timestamp) : new Date();
+      this._lastSavedState.unsaved = false;
+      this._updateLastSavedDisplay();
+
+      console.log('[ForgeUtils] Marked as saved at:', this._lastSavedState.timestamp);
+    },
+
+    /**
+     * Mark as unsaved/dirty
+     */
+    markUnsaved() {
+      if (!this._lastSavedState.element) return;
+
+      this._lastSavedState.unsaved = true;
+      this._updateLastSavedDisplay();
+    },
+
+    /**
+     * Get the last saved timestamp
+     * @returns {Date|null}
+     */
+    getLastSavedTime() {
+      return this._lastSavedState.timestamp;
+    },
+
+    /**
+     * Clean up the last saved indicator
+     */
+    _cleanupLastSaved() {
+      if (this._lastSavedState.intervalId) {
+        clearInterval(this._lastSavedState.intervalId);
+      }
+      if (this._lastSavedState.element) {
+        this._lastSavedState.element.remove();
+      }
+      this._lastSavedState = {
+        timestamp: null,
+        element: null,
+        intervalId: null,
+        unsaved: true
+      };
+    },
+
+    /**
+     * Update the display of the last saved indicator
+     * @private
+     */
+    _updateLastSavedDisplay() {
+      const { element, timestamp, unsaved, unsavedText } = this._lastSavedState;
+      if (!element) return;
+
+      if (unsaved || !timestamp) {
+        element.innerHTML = `<span style="color: #d97706;">\u{25CF}</span> ${unsavedText || 'Not saved yet'}`;
+        element.style.color = '#92400e';
+        element.style.background = 'rgba(254, 243, 199, 0.8)';
+        return;
+      }
+
+      const now = new Date();
+      const diff = now - timestamp;
+      const seconds = Math.floor(diff / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      let timeText;
+      if (seconds < 10) {
+        timeText = 'just now';
+      } else if (seconds < 60) {
+        timeText = `${seconds}s ago`;
+      } else if (minutes < 60) {
+        timeText = minutes === 1 ? '1 min ago' : `${minutes} mins ago`;
+      } else if (hours < 24) {
+        timeText = hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+      } else {
+        timeText = days === 1 ? '1 day ago' : `${days} days ago`;
+      }
+
+      element.innerHTML = `<span style="color: #10b981;">\u{25CF}</span> Saved ${timeText}`;
+      element.style.color = '#6b7280';
+      element.style.background = 'rgba(255, 255, 255, 0.7)';
     }
   };
 
