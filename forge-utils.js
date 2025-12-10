@@ -1,6 +1,6 @@
 /**
  * FORGE - JavaScript Utility Library
- * Version: 3.2.25
+ * Version: 3.2.26
  * Date: December 10, 2025
  * 
  * Lightweight utility library for date formatting, price calculations, 
@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.25',
+    VERSION: '3.2.26',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -1763,7 +1763,7 @@ const ForgeUtils = (function() {
     },
 
     // ==========================================
-    // STICKY TOOLBAR HELPERS (v3.2.25)
+    // STICKY TOOLBAR HELPERS (v3.2.26)
     // ==========================================
 
     /**
@@ -2178,6 +2178,25 @@ const ForgeUtils = (function() {
 })();
 
 window.ForgeUtils = ForgeUtils;
+
+// ============================================
+// CONFIGURATION (TRN-220)
+// ============================================
+ForgeUtils.CONFIG = {
+  jsonbin: {
+    apiKey: '$2a$10$UNwYVv4XjFwr/sJ8BTilOu9TQME4u/zAa4P1TvcEuckVvdlUvd63C',
+    masterIndex: '6914fec0ae596e708f556374'
+  },
+  workers: {
+    ai: 'https://trnt-ai-proxy.damon-be2.workers.dev/v1/messages',
+    places: 'https://trnt-places.damon-be2.workers.dev',
+    unsplash: 'https://trnt-unsplash.damon-be2.workers.dev',
+    formspree: 'https://formspree.io/f/mqawkrzw'
+  },
+  urls: {
+    base: 'https://forgetravel.co'
+  }
+};
 
 console.log(`%c\u{1F525} FORGE v${ForgeUtils.version} Loaded`, 
   'color: #83644D; font-weight: bold; font-size: 14px;');
