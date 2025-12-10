@@ -1,6 +1,6 @@
 /**
  * FORGE - JavaScript Utility Library
- * Version: 3.2.23
+ * Version: 3.2.24
  * Date: December 10, 2025
  * 
  * Lightweight utility library for date formatting, price calculations, 
@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.23',
+    VERSION: '3.2.24',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -1760,6 +1760,37 @@ const ForgeUtils = (function() {
       if (element) {
         element.classList.add('hidden');
       }
+    },
+
+    // ==========================================
+    // STICKY TOOLBAR HELPERS (v3.2.24)
+    // ==========================================
+
+    /**
+     * Update toolbar save button state
+     * @param {boolean} saved - true if saved, false if unsaved
+     */
+    setToolbarSaveState(saved) {
+      const btn = document.getElementById('toolbarSaveBtn');
+      const text = document.getElementById('toolbarSaveBtnText');
+      const revertBtn = document.getElementById('toolbarRevertBtn');
+      
+      if (btn) {
+        btn.disabled = saved;
+      }
+      if (text) {
+        text.textContent = saved ? 'Saved' : 'Save';
+      }
+      if (revertBtn) {
+        revertBtn.disabled = saved;
+      }
+    },
+
+    /**
+     * Initialize sticky toolbar (adds padding class to body)
+     */
+    initStickyToolbar() {
+      document.body.classList.add('has-sticky-toolbar');
     }
   };
 

@@ -34,6 +34,16 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
+/* Sticky toolbar content padding */
+body.has-sticky-toolbar {
+  padding-bottom: 80px;
+}
+
+/* Override for elements that manage their own padding */
+body.has-sticky-toolbar #mainContent {
+  padding-bottom: 80px;
+}
+
 /* ===========================================
    3. Utility Classes
    =========================================== */
