@@ -1,6 +1,6 @@
 /**
  * FORGE - JavaScript Utility Library
- * Version: 3.2.24
+ * Version: 3.2.25
  * Date: December 10, 2025
  * 
  * Lightweight utility library for date formatting, price calculations, 
@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.24',
+    VERSION: '3.2.25',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -1763,7 +1763,7 @@ const ForgeUtils = (function() {
     },
 
     // ==========================================
-    // STICKY TOOLBAR HELPERS (v3.2.24)
+    // STICKY TOOLBAR HELPERS (v3.2.25)
     // ==========================================
 
     /**
@@ -2019,6 +2019,20 @@ const ForgeUtils = (function() {
       const mins = parseInt(parts[1], 10);
       if (isNaN(hours) || isNaN(mins)) return null;
       return hours * 60 + mins;
+    },
+
+    /**
+     * Parse a value that may be a number, string with currency symbols, or formatted with commas
+     * @param {any} value - Value to parse (number, string like "$5,000", or null/undefined)
+     * @returns {number} - Parsed number, or 0 if invalid
+     */
+    parseNumericValue(value) {
+      if (value === null || value === undefined || value === '') return 0;
+      if (typeof value === 'number') return value;
+      // Remove currency symbols and commas
+      const cleaned = String(value).replace(/[$,]/g, '');
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
     }
   };
 
