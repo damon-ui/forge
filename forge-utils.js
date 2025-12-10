@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.18',
+    VERSION: '3.2.19',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -1770,6 +1770,60 @@ const ForgeUtils = (function() {
   };
 
   // ============================================
+  // PDF UTILITIES (Cloudflare worker)
+  // ============================================
+  const PdfUtils = {
+    WORKER_URL: 'https://trnt-pdf.damon-be2.workers.dev',
+
+    /**
+     * Generate a PDF via worker and return the blob.
+     * @param {Object} options
+     * @param {string} options.url - Page URL to render (defaults to current page).
+     * @param {string} options.filename - Desired filename (with .pdf).
+     * @param {string} options.headerText - Optional header text.
+     * @param {string} options.footerText - Optional footer text.
+     * @param {Function} options.onStart - Called before fetch.
+     * @param {Function} options.onComplete - Called with (blob, filename) on success.
+     * @param {Function} options.onError - Called with (error) on failure.
+     * @returns {Promise<Blob>}
+     */
+    async download(options = {}) {
+      const {
+        url = (typeof window !== 'undefined' ? window.location.href : ''),
+        filename = 'download.pdf',
+        headerText = '',
+        footerText = '',
+        onStart,
+        onComplete,
+        onError
+      } = options;
+
+      try {
+        onStart?.();
+
+        const params = new URLSearchParams({
+          url,
+          filename,
+          headerText,
+          footerText
+        });
+
+        const response = await fetch(`${this.WORKER_URL}?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(`PDF generation failed (${response.status})`);
+        }
+
+        const blob = await response.blob();
+        onComplete?.(blob, filename);
+        return blob;
+      } catch (error) {
+        onError?.(error);
+        throw error;
+      }
+    }
+  };
+
+  // ============================================
   // ADD ANIMATIONS TO DOM
   // ============================================
   const addAnimations = () => {
@@ -1851,6 +1905,7 @@ const ForgeUtils = (function() {
     UI: UIUtils,
     Migration: MigrationUtils,
     Data: DataUtils,
+    Pdf: PdfUtils,
     version: CONFIG.VERSION
   };
 })();
