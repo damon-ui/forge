@@ -1,7 +1,7 @@
 /**
  * FORGE - JavaScript Utility Library
- * Version: 3.2.0
- * Date: December 2, 2025
+ * Version: 3.2.23
+ * Date: December 10, 2025
  * 
  * Lightweight utility library for date formatting, price calculations, 
  * and data validation in travel applications.
@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.22',
+    VERSION: '3.2.23',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -1604,6 +1604,162 @@ const ForgeUtils = (function() {
       element.innerHTML = `<span style="color: #10b981;">\u{25CF}</span> Saved ${timeText}`;
       element.style.color = '#6b7280';
       element.style.background = 'rgba(255, 255, 255, 0.7)';
+    },
+
+    // ==========================================
+    // LOADING/ERROR STATE HELPERS (v3.2.23)
+    // ==========================================
+
+    /**
+     * Show full-page loading state
+     * Assumes #loadingState and #errorState elements exist
+     * @param {string} message - Loading message (default: 'Loading...')
+     */
+    showFullPageLoading(message = 'Loading...') {
+      const loadingState = document.getElementById('loadingState');
+      const errorState = document.getElementById('errorState');
+      
+      if (loadingState) {
+        // Update message if there's a text element
+        const textEl = loadingState.querySelector('p');
+        if (textEl) {
+          textEl.textContent = message;
+        }
+        loadingState.classList.remove('hidden');
+      }
+      
+      if (errorState) {
+        errorState.classList.add('hidden');
+      }
+    },
+
+    /**
+     * Hide full-page loading state
+     */
+    hideFullPageLoading() {
+      const loadingState = document.getElementById('loadingState');
+      if (loadingState) {
+        loadingState.classList.add('hidden');
+      }
+    },
+
+    /**
+     * Show full-page error state
+     * Assumes #loadingState, #errorState, and #errorMessage elements exist
+     * @param {string} message - Error message
+     * @param {string} backUrl - URL for back button (default: '/admin')
+     * @param {string} backLabel - Label for back button (default: 'Back to Admin')
+     */
+    showFullPageError(message, backUrl = '/admin', backLabel = 'Back to Admin') {
+      const loadingState = document.getElementById('loadingState');
+      const errorState = document.getElementById('errorState');
+      const errorMessage = document.getElementById('errorMessage');
+      const backLink = errorState?.querySelector('a[href]');
+      
+      if (loadingState) {
+        loadingState.classList.add('hidden');
+      }
+      
+      if (errorState) {
+        errorState.classList.remove('hidden');
+      }
+      
+      if (errorMessage) {
+        errorMessage.textContent = message;
+      }
+      
+      if (backLink) {
+        backLink.href = backUrl;
+        backLink.textContent = backLabel;
+      }
+    },
+
+    /**
+     * Show overlay loading state (auto-injects HTML if needed)
+     * @param {string} message - Loading message (default: 'Loading...')
+     */
+    showOverlayLoading(message = 'Loading...') {
+      let overlay = document.getElementById('forgeLoadingOverlay');
+      
+      if (!overlay) {
+        // Inject HTML if it doesn't exist
+        overlay = document.createElement('div');
+        overlay.id = 'forgeLoadingOverlay';
+        overlay.className = 'forge-loading-overlay hidden';
+        overlay.innerHTML = `
+          <div class="bg-white rounded-lg p-8 shadow-2xl text-center">
+            <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span id="forgeLoadingText">Loading...</span>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+      
+      // Update message
+      const textEl = document.getElementById('forgeLoadingText');
+      if (textEl) {
+        textEl.textContent = message;
+      }
+      
+      // Show overlay
+      overlay.classList.remove('hidden');
+    },
+
+    /**
+     * Hide overlay loading state
+     */
+    hideOverlayLoading() {
+      const overlay = document.getElementById('forgeLoadingOverlay');
+      if (overlay) {
+        overlay.classList.add('hidden');
+      }
+    },
+
+    /**
+     * Show inline loading state (for admin tabs)
+     * @param {string} elementId - ID of element to show
+     */
+    showInlineLoading(elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.remove('hidden');
+      }
+    },
+
+    /**
+     * Hide inline loading state
+     * @param {string} elementId - ID of element to hide
+     */
+    hideInlineLoading(elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.add('hidden');
+      }
+    },
+
+    /**
+     * Show inline empty state
+     * @param {string} elementId - ID of element to show
+     */
+    showInlineEmpty(elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.remove('hidden');
+      }
+    },
+
+    /**
+     * Hide inline empty state
+     * @param {string} elementId - ID of element to hide
+     */
+    hideInlineEmpty(elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.classList.add('hidden');
+      }
     }
   };
 
