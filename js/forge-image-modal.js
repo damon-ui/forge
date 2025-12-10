@@ -16,9 +16,23 @@ const ForgeImageModal = (function() {
   // ===== PUBLIC API =====
 
   function init(options = {}) {
-    modalElement = document.getElementById(options.modalId || 'imageModal');
+    const modalId = options.modalId || 'imageModal';
+    const containerSelector = options.container || 'body';
+    
+    // Check if modal already exists
+    modalElement = document.getElementById(modalId);
+    
+    // If not found, try to inject it
     if (!modalElement) {
-      console.warn('ForgeImageModal: Modal element not found');
+      const container = document.querySelector(containerSelector);
+      if (container) {
+        container.insertAdjacentHTML('beforeend', getModalHTML({ modalId }));
+        modalElement = document.getElementById(modalId);
+      }
+    }
+    
+    if (!modalElement) {
+      console.warn('ForgeImageModal: Modal element not found and could not be injected');
     }
   }
 
@@ -243,51 +257,50 @@ const ForgeImageModal = (function() {
 
   function getModalHTML(options = {}) {
     const modalId = options.modalId || 'imageModal';
-    const title = options.title || 'Select Image';
+    const title = options.title || 'Change Image';
 
     return `
-      <div id="${modalId}" class="modal-backdrop">
-        <div class="modal-content">
-          <h3 data-modal-title style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">${title}</h3>
-
-          <!-- URL Input -->
-          <div style="margin-bottom: 1rem;">
-            <label class="form-label">Paste Image URL</label>
-            <input type="text" data-image-url class="form-input" placeholder="https://..." />
-          </div>
-
-          <!-- File Upload -->
-          <div style="margin-bottom: 1rem;">
-            <label class="form-label">Or Upload Image</label>
-            <input type="file" data-file-input accept="image/*" onchange="ForgeImageModal.handleFileUpload(event)"
-                   style="width: 100%; font-size: 0.875rem;" />
-            <div data-upload-status class="text-xs mt-1 text-center"></div>
-          </div>
-
-          <!-- Unsplash Search Toggle -->
-          <button type="button" onclick="ForgeImageModal.toggleUnsplashSearch()"
-                  class="btn btn-outline" style="width: 100%; margin-bottom: 0.75rem;">
-            Search Unsplash
+  <div id="${modalId}" class="modal-backdrop">
+    <div class="modal-content">
+      <div class="flex items-center justify-between mb-4">
+        <h3 data-modal-title class="text-lg font-semibold" style="color: var(--trnt-accent);">${title}</h3>
+        <button onclick="ForgeImageModal.close()" class="p-1 hover:bg-gray-100 rounded"><i data-lucide="x" class="w-5 h-5" style="color: var(--trnt-border);"></i></button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="form-label">Paste Image URL</label>
+          <input type="url" data-image-url class="form-input" placeholder="https://...">
+        </div>
+        <div class="text-center text-gray-500 text-sm">&mdash; or &mdash;</div>
+        <div>
+          <label class="w-full py-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 cursor-pointer" style="border-color: var(--trnt-border); color: var(--trnt-secondary);">
+            <i data-lucide="upload" class="w-5 h-5"></i>
+            <span>Upload from Device</span>
+            <input type="file" data-file-input accept="image/*" class="hidden" onchange="ForgeImageModal.handleFileUpload(event)" />
+          </label>
+          <p data-upload-status class="text-xs mt-1 text-center" style="color: var(--trnt-secondary);"></p>
+        </div>
+        <div class="text-center text-gray-500 text-sm">&mdash; or &mdash;</div>
+        <div class="unsplash-search-container">
+          <button onclick="ForgeImageModal.toggleUnsplashSearch()" class="w-full py-2 border-2 border-dashed rounded-lg text-sm font-medium flex items-center justify-center gap-2" style="border-color: var(--trnt-border); color: var(--trnt-secondary);">
+            <i data-lucide="image" class="w-4 h-4"></i> Search Unsplash
           </button>
-
-          <!-- Unsplash Panel (hidden by default) -->
-          <div data-unsplash-panel class="hidden unsplash-search-container">
+          <div data-unsplash-panel class="hidden mt-3">
             <div class="unsplash-search-input">
-              <input type="text" data-unsplash-query placeholder="Search free photos..."
-                     onkeydown="if(event.key==='Enter'){ForgeImageModal.searchUnsplash();}" />
-              <button type="button" data-unsplash-search-btn onclick="ForgeImageModal.searchUnsplash()">Search</button>
+              <input type="text" data-unsplash-query class="form-input" placeholder="e.g. santorini sunset" onkeydown="if(event.key==='Enter')ForgeImageModal.searchUnsplash()" />
+              <button data-unsplash-search-btn onclick="ForgeImageModal.searchUnsplash()">Search</button>
             </div>
             <div data-unsplash-results></div>
-            <p class="unsplash-credit">Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a></p>
-          </div>
-
-          <!-- Action Buttons -->
-          <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-            <button type="button" onclick="ForgeImageModal.close()" class="btn btn-outline" style="flex: 1;">Cancel</button>
-            <button type="button" onclick="ForgeImageModal.save()" class="btn btn-primary" style="flex: 1;">Save</button>
+            <div class="unsplash-credit">Photos by <a href="https://unsplash.com" target="_blank">Unsplash</a></div>
           </div>
         </div>
+        <div class="flex gap-2 pt-2">
+          <button onclick="ForgeImageModal.save()" class="flex-1 py-2 text-white font-medium rounded-lg" style="background: var(--btn-primary);">Save</button>
+          <button onclick="ForgeImageModal.close()" class="px-4 py-2 font-medium rounded-lg" style="background: white; color: var(--trnt-accent); border: 2px solid var(--trnt-border);">Cancel</button>
+        </div>
       </div>
+    </div>
+  </div>
     `;
   }
 
