@@ -186,7 +186,29 @@ body {
 }
 
 /* ===========================================
-   9. Standard Button Styles
+   9. Hero Section Styles
+   =========================================== */
+.hero-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.3), transparent);
+}
+
+.hero-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  color: white;
+}
+
+/* ===========================================
+   10. Standard Button Styles
    =========================================== */
 .btn {
   display: inline-flex;
@@ -213,7 +235,7 @@ body {
 .btn-outline { background: white; border: 1px solid var(--trnt-border); color: var(--trnt-accent); }
 
 /* ===========================================
-   10. Print/PDF Base Styles
+   11. Print/PDF Base Styles
    =========================================== */
 @media print {
   * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -306,7 +328,7 @@ body {
 }
 
 /* ===========================================
-   11. Sticky Toolbar (TRN-199)
+   12. Sticky Toolbar (TRN-199)
    =========================================== */
 .forge-sticky-toolbar {
   position: fixed;
@@ -456,7 +478,7 @@ body.embed-mode .toolbar-btn-back {
 }
 
 /* ===========================================
-   12. TRN-201: Fix for Tall Iframes (Embed Mode)
+   13. TRN-201: Fix for Tall Iframes (Embed Mode)
    =========================================== */
 body.embed-mode {
   position: relative;
