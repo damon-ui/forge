@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.19',
+    VERSION: '3.2.20',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -686,6 +686,72 @@ const ForgeUtils = (function() {
         console.error('Error deleting bin:', error);
         throw error;
       }
+    },
+
+    /**
+     * Legacy unwrap helper: returns record.option if present, else record.
+     * @param {Object} record
+     * @returns {Object}
+     */
+    unwrapLegacy(record) {
+      if (!record) return record;
+      return record.option ? record.option : record;
+    },
+
+    /**
+     * Add an entry to a master index collection.
+     * @param {Object} indexData
+     * @param {string} collection - 'options' | 'comparisons' | 'itineraries'
+     * @param {Object} entry
+     * @returns {Object} modified indexData
+     */
+    addToIndex(indexData, collection, entry) {
+      if (!indexData) return indexData;
+      if (!indexData[collection]) indexData[collection] = [];
+      indexData[collection].push(entry);
+      return indexData;
+    },
+
+    /**
+     * Update an entry in a master index collection by id or binId.
+     * @param {Object} indexData
+     * @param {string} collection - 'options' | 'comparisons' | 'itineraries'
+     * @param {string} id
+     * @param {Object} updates
+     * @returns {Object} modified indexData
+     */
+    updateInIndex(indexData, collection, id, updates) {
+      if (!indexData || !indexData[collection] || !id) return indexData;
+      const list = indexData[collection];
+      const entry = list.find(e => e.id === id || e.binId === id);
+      if (entry) {
+        Object.assign(entry, updates);
+      }
+      return indexData;
+    },
+
+    /**
+     * Remove an entry from a master index collection by id or binId.
+     * @param {Object} indexData
+     * @param {string} collection - 'options' | 'comparisons' | 'itineraries'
+     * @param {string} id
+     * @returns {Object} modified indexData
+     */
+    removeFromIndex(indexData, collection, id) {
+      if (!indexData || !indexData[collection] || !id) return indexData;
+      indexData[collection] = indexData[collection].filter(e => e.id !== id && e.binId !== id);
+      return indexData;
+    },
+
+    /**
+     * Find comparison entry by slug.
+     * @param {Object} indexData
+     * @param {string} slug
+     * @returns {Object|null}
+     */
+    findBySlug(indexData, slug) {
+      if (!indexData || !indexData.comparisons || !slug) return null;
+      return indexData.comparisons.find(c => c.slug === slug) || null;
     }
   };
 
