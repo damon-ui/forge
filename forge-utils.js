@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.17',
+    VERSION: '3.2.18',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
@@ -46,6 +46,101 @@ const ForgeUtils = (function() {
   // 1. DATE UTILITIES
   // ============================================
   const DateUtils = {
+    /**
+     * Parse an ISO date string (YYYY-MM-DD) as a local Date without timezone shift.
+     * Returns null if invalid.
+     */
+    parseLocal(isoDate) {
+      if (!isoDate) return null;
+      const parts = String(isoDate).split('-');
+      if (parts.length !== 3) return null;
+      const [y, m, d] = parts.map(n => parseInt(n, 10));
+      if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
+      const date = new Date(y, m - 1, d);
+      if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
+        return null; // prevent rollover (e.g., 2025-02-31)
+      }
+      return date;
+    },
+
+    /**
+     * Convert a Date (or date-like string) to ISO YYYY-MM-DD.
+     * Returns '' on invalid input.
+     */
+    toISO(dateInput) {
+      if (!dateInput) return '';
+      if (dateInput instanceof Date) {
+        return Number.isNaN(dateInput.getTime()) ? '' : dateInput.toISOString().split('T')[0];
+      }
+      const parsed = this.parseLocal(dateInput);
+      return parsed ? parsed.toISOString().split('T')[0] : '';
+    },
+
+    /**
+     * Friendly single-date formatting.
+     * Examples: "Mar 15, 2026" (default) or "March 15, 2026" (month: 'long').
+     */
+    formatFriendly(dateStr, options = {}) {
+      const {
+        month = 'short',
+        includeYear = true,
+        weekday = false
+      } = options;
+
+      const date = this.parseLocal(dateStr);
+      if (!date) return dateStr || '';
+
+      const formatOptions = { month, day: 'numeric' };
+      if (includeYear) formatOptions.year = 'numeric';
+      if (weekday) formatOptions.weekday = weekday === true ? 'short' : weekday;
+
+      return date.toLocaleDateString('en-US', formatOptions);
+    },
+
+    /**
+     * Friendly range formatting with smart year handling.
+     * Same year: "Mar 15 - Mar 22, 2026"
+     * Different years: "Dec 30, 2026 - Jan 3, 2027"
+     */
+    formatRangeFriendly(startDate, endDate) {
+      if (!startDate || !endDate) return '';
+      const start = this.parseLocal(startDate);
+      const end = this.parseLocal(endDate);
+      if (!start || !end) return `${startDate} - ${endDate}`;
+
+      const sameYear = start.getFullYear() === end.getFullYear();
+      const sameMonth = sameYear && start.getMonth() === end.getMonth();
+
+      const startOpts = { month: 'short', day: 'numeric', includeYear: !sameYear };
+      const endOpts = { month: 'short', day: 'numeric', includeYear: true };
+
+      const startStr = this.formatFriendly(startDate, startOpts);
+      const endStr = this.formatFriendly(endDate, endOpts);
+
+      if (sameYear && sameMonth) {
+        return `${startStr}-${end.getDate()}, ${end.getFullYear()}`;
+      }
+
+      return `${startStr} - ${endStr}`;
+    },
+
+    /**
+     * Format "HH:MM" (24h) to "h:mm AM/PM".
+     * Handles "8:05", "08:05", "20:30". Returns original on invalid.
+     */
+    formatTime12(timeStr) {
+      if (!timeStr) return '';
+      const parts = String(timeStr).split(':');
+      if (parts.length < 2) return timeStr;
+      const hours = parseInt(parts[0], 10);
+      const minutes = parts[1].padStart(2, '0');
+      if (Number.isNaN(hours)) return timeStr;
+
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHour = hours % 12 || 12; // 0 -> 12 AM, 12 -> 12 PM
+      return `${displayHour}:${minutes} ${ampm}`;
+    },
+
     formatDate(isoDate, format = 'MM/DD/YYYY') {
       if (!isoDate) return '';
       
