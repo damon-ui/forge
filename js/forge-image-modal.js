@@ -52,50 +52,16 @@ const ForgeImageModal = (function() {
 
     modalElement.classList.add('active');
 
-    // TRN-201: In embed mode, anchor modal to clicked element
-    const isEmbed = new URLSearchParams(window.location.search).get('embed') !== null;
-    if (isEmbed) {
-      // Stop flexbox from forcing vertical center
-      modalElement.style.alignItems = 'flex-start';
-
-      // Find where the user clicked
-      const trigger = options.triggerElement || document.activeElement;
-      let targetTop = 100; // Default fallback
-
-      if (trigger && trigger.getBoundingClientRect) {
-        const rect = trigger.getBoundingClientRect();
-        // Position modal near the clicked element
-        targetTop = Math.max(20, rect.top + (rect.height / 2) - 150);
-      }
-
-      // Apply positioning to the content box
-      const modalContent = modalElement.querySelector('.modal-content');
-      if (modalContent) {
-        modalContent.style.margin = '0 auto';
-        modalContent.style.marginTop = targetTop + 'px';
-        modalContent.style.position = 'relative';
-        modalContent.style.top = 'auto';
-        modalContent.style.left = 'auto';
-        modalContent.style.transform = 'none';
-      }
-    }
+    // TRN-217: Use centralized modal positioning
+    const triggerElement = options.triggerElement || document.activeElement;
+    ForgeEmbed.positionModal(modalElement, { anchorTo: triggerElement });
   }
 
   function close() {
     if (!modalElement) return;
 
-    // TRN-201: Reset modal positioning (backdrop and content)
-    modalElement.style.alignItems = '';
-
-    const modalContent = modalElement.querySelector('.modal-content');
-    if (modalContent) {
-      modalContent.style.margin = '';
-      modalContent.style.marginTop = '';
-      modalContent.style.position = '';
-      modalContent.style.top = '';
-      modalContent.style.left = '';
-      modalContent.style.transform = '';
-    }
+    // TRN-217: Use centralized reset
+    ForgeEmbed.resetModalPosition(modalElement);
 
     modalElement.classList.remove('active');
     currentCallback = null;

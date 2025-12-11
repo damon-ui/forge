@@ -305,6 +305,88 @@ body.embed-mode .modal-content { max-height: 85vh; overflow-y: auto; }
 
       // Store reference for potential cleanup
       this._repositionToolbar = repositionToolbar;
+    },
+
+    // =====================================================
+    // MODAL POSITIONING FOR EMBED MODE (TRN-217)
+    // =====================================================
+
+    /**
+     * Position a modal for proper display in embed mode (TRN-217)
+     * @param {HTMLElement} modalElement - The modal backdrop element
+     * @param {Object} options - Positioning options
+     * @param {HTMLElement} options.anchorTo - Element to anchor near (for image modals)
+     * @param {number} options.maxHeight - Max height for modal content (default: 600)
+     * @param {number} options.padding - Viewport padding (default: 100)
+     */
+    positionModal: function(modalElement, options = {}) {
+      if (!this.isEmbedMode()) return;
+      
+      const { anchorTo, maxHeight = 600, padding = 100 } = options;
+      
+      requestAnimationFrame(() => {
+        // Fixed positioning covering viewport
+        modalElement.style.position = 'fixed';
+        modalElement.style.top = '0';
+        modalElement.style.left = '0';
+        modalElement.style.right = '0';
+        modalElement.style.bottom = '0';
+        modalElement.style.zIndex = '9999';
+        
+        const modalContent = modalElement.querySelector('.modal-content');
+        if (!modalContent) {
+          console.warn('ForgeEmbed.positionModal: No .modal-content found');
+          return;
+        }
+        
+        if (anchorTo && anchorTo.getBoundingClientRect) {
+          // Strategy 2: Anchor to trigger element (for image modals)
+          modalElement.style.alignItems = 'flex-start';
+          const rect = anchorTo.getBoundingClientRect();
+          const targetTop = Math.max(20, rect.top + (rect.height / 2) - 150);
+          modalContent.style.marginTop = targetTop + 'px';
+          modalContent.style.position = 'relative';
+        } else {
+          // Strategy 1: Viewport-centered (default)
+          modalElement.style.alignItems = 'center';
+          modalElement.style.justifyContent = 'center';
+          modalContent.style.marginTop = '';
+          modalContent.style.marginBottom = '';
+        }
+        
+        // Content scrolling for tall modals
+        const viewportHeight = window.innerHeight;
+        const computedMaxHeight = Math.min(viewportHeight - padding, maxHeight);
+        modalContent.style.maxHeight = computedMaxHeight + 'px';
+        modalContent.style.overflowY = 'auto';
+      });
+    },
+
+    /**
+     * Reset modal positioning styles when closing (TRN-217)
+     * @param {HTMLElement} modalElement - The modal backdrop element
+     */
+    resetModalPosition: function(modalElement) {
+      // Reset backdrop styles
+      modalElement.style.position = '';
+      modalElement.style.top = '';
+      modalElement.style.left = '';
+      modalElement.style.right = '';
+      modalElement.style.bottom = '';
+      modalElement.style.alignItems = '';
+      modalElement.style.justifyContent = '';
+      modalElement.style.zIndex = '';
+      
+      // Reset content styles
+      const modalContent = modalElement.querySelector('.modal-content');
+      if (modalContent) {
+        modalContent.style.marginTop = '';
+        modalContent.style.marginBottom = '';
+        modalContent.style.maxHeight = '';
+        modalContent.style.overflowY = '';
+        modalContent.style.position = '';
+        modalContent.style.margin = '';
+      }
     }
   };
 
