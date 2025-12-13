@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.28] - 2025-12-12
+
+### Added
+
+- **Retry Logic with Exponential Backoff** - All JSONBin API calls in `ForgeUtils.Storage` now automatically retry on rate limits (429) and server errors (5xx)
+  - `fetchWithRetry()` helper function with configurable retry attempts (default: 3)
+  - Exponential backoff delays: 1s, 2s, 4s
+  - Console warnings for retry attempts with `[FORGE]` prefix
+  - Applies to: `loadMasterIndex()`, `saveMasterIndex()`, `loadBin()`, `createBin()`, `updateBin()`, `deleteBin()`
+
+### Changed
+
+- Improved reliability for all Storage operations during network issues or API rate limits
+
+---
+
 ## [3.0.0] - 2025-11-19
 
 ### 🔐 Security
