@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.29] - 2025-12-13
+
+### Changed
+
+- Version bump to resolve jsDelivr CDN cache issue with v3.2.28
+
+---
+
 ## [3.2.28] - 2025-12-12
 
 ### Added
