@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.30] - 2025-12-13
+
+### Added
+
+- **ForgeEmailModal** (TRN-21) - New module for sending branded emails to clients
+  - `ForgeEmailModal.init({ modalId })` - Auto-injects modal HTML
+  - `ForgeEmailModal.open({ clientName, toolType, itemUrl, onSuccess })` - Opens modal with pre-filled fields
+  - `ForgeEmailModal.close()` - Closes modal
+  - Supports itinerary and comparison tool types
+  - Sends via Resend API through Cloudflare Worker
+  - Optional personal message field
+
+---
+
 ## [3.2.29] - 2025-12-13
 
 ### Changed
