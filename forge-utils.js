@@ -523,6 +523,39 @@ const ForgeUtils = (function() {
   // ============================================
   // 6. STORAGE UTILITIES (JSONBin)
   // ============================================
+  
+  /**
+   * Private helper: Fetch with exponential backoff retry logic.
+   * Retries on rate limits (429) and server errors (5xx).
+   * @param {string} url
+   * @param {Object} options - Fetch options
+   * @param {number} maxRetries - Maximum retry attempts (default: 3)
+   * @returns {Promise<Response>}
+   */
+  async function fetchWithRetry(url, options, maxRetries = 3) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (response.ok) return response;
+        
+        // Retry on rate limit (429) or server errors (5xx)
+        if ((response.status === 429 || response.status >= 500) && attempt < maxRetries - 1) {
+          const delay = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          console.warn(`[FORGE] Retry ${attempt + 1}/${maxRetries} after ${delay}ms (HTTP ${response.status})`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      } catch (error) {
+        if (attempt === maxRetries - 1) throw error;
+        const delay = Math.pow(2, attempt) * 1000;
+        console.warn(`[FORGE] Retry ${attempt + 1}/${maxRetries} after ${delay}ms (${error.message})`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+
   const StorageUtils = {
     async loadMasterIndex(apiKey, indexId) {
       if (!apiKey || !indexId) {
@@ -530,7 +563,7 @@ const ForgeUtils = (function() {
       }
       
       try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${indexId}/latest`, {
+        const response = await fetchWithRetry(`https://api.jsonbin.io/v3/b/${indexId}/latest`, {
           method: 'GET',
           headers: {
             'X-Master-Key': apiKey,
@@ -556,7 +589,7 @@ const ForgeUtils = (function() {
       }
       
       try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${indexId}`, {
+        const response = await fetchWithRetry(`https://api.jsonbin.io/v3/b/${indexId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -583,7 +616,7 @@ const ForgeUtils = (function() {
       }
       
       try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+        const response = await fetchWithRetry(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
           method: 'GET',
           headers: {
             'X-Master-Key': apiKey,
@@ -619,7 +652,7 @@ const ForgeUtils = (function() {
           headers['X-Bin-Name'] = binName;
         }
         
-        const response = await fetch('https://api.jsonbin.io/v3/b', {
+        const response = await fetchWithRetry('https://api.jsonbin.io/v3/b', {
           method: 'POST',
           headers: headers,
           body: JSON.stringify(data)
@@ -642,7 +675,7 @@ const ForgeUtils = (function() {
       }
       
       try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+        const response = await fetchWithRetry(`https://api.jsonbin.io/v3/b/${binId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -669,7 +702,7 @@ const ForgeUtils = (function() {
       }
       
       try {
-        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+        const response = await fetchWithRetry(`https://api.jsonbin.io/v3/b/${binId}`, {
           method: 'DELETE',
           headers: {
             'X-Master-Key': apiKey,
