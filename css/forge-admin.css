@@ -1,0 +1,529 @@
+/**
+ * FORGE Admin CSS
+ * Design system for FORGE SaaS admin panel
+ * Luxury-minimal aesthetic for admin shell and embedded tools
+ *
+ * @version 1.0.0
+ * CDN: https://cdn.jsdelivr.net/gh/damon-ui/forge@main/css/forge-admin.css
+ * 
+ * Note: This extends forge-common.css, not replaces it
+ */
+
+/* ===========================================
+   1. CSS Custom Properties (Design Tokens)
+   =========================================== */
+:root {
+  /* Core Colors */
+  --forge-charcoal: #1C2A3A;
+  --forge-charcoal-light: #2A3A4A;
+  --forge-orange: #E85A24;
+  --forge-orange-hover: #D14E1A;
+  --forge-gold: #D4AF7A;
+  --forge-gold-light: rgba(212, 175, 122, 0.15);
+  --forge-cream: #FAF9F7;
+  --forge-muted: #6F7276;
+  --forge-white: #FFFFFF;
+  --forge-border: #E5E5E5;
+  
+  /* Semantic Colors */
+  --forge-bg-primary: var(--forge-cream);
+  --forge-bg-panel: var(--forge-white);
+  --forge-bg-sidebar: var(--forge-charcoal);
+  --forge-text-primary: var(--forge-charcoal);
+  --forge-text-secondary: var(--forge-muted);
+  --forge-text-inverse: var(--forge-white);
+  --forge-accent: var(--forge-gold);
+  --forge-cta: var(--forge-orange);
+  
+  /* Spacing Scale */
+  --forge-space-xs: 4px;
+  --forge-space-sm: 8px;
+  --forge-space-md: 16px;
+  --forge-space-lg: 24px;
+  --forge-space-xl: 32px;
+  
+  /* Border Radius */
+  --forge-radius-sm: 6px;
+  --forge-radius-md: 8px;
+  --forge-radius-lg: 12px;
+  --forge-radius-pill: 50px;
+  
+  /* Shadows */
+  --forge-shadow-sm: 0 1px 3px rgba(28, 42, 58, 0.08);
+  --forge-shadow-md: 0 4px 12px rgba(28, 42, 58, 0.1);
+  --forge-shadow-lg: 0 8px 32px rgba(28, 42, 58, 0.12);
+  
+  /* Typography */
+  --forge-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* Transitions */
+  --forge-transition: all 0.15s ease;
+}
+
+/* ===========================================
+   2. Typography Classes
+   =========================================== */
+.forge-h1 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--forge-text-primary);
+  font-family: var(--forge-font);
+  margin: 0;
+}
+
+.forge-h2 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--forge-text-primary);
+  font-family: var(--forge-font);
+  margin: 0;
+}
+
+.forge-h3 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--forge-text-primary);
+  font-family: var(--forge-font);
+  margin: 0;
+}
+
+.forge-body {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--forge-text-primary);
+  font-family: var(--forge-font);
+  margin: 0;
+}
+
+.forge-small {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--forge-text-secondary);
+  font-family: var(--forge-font);
+  margin: 0;
+}
+
+.forge-label {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--forge-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: var(--forge-font);
+  margin: 0;
+}
+
+/* ===========================================
+   3. Button Classes
+   =========================================== */
+.forge-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: var(--forge-radius-pill);
+  font-family: var(--forge-font);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  border: none;
+  transition: var(--forge-transition);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.forge-btn:focus {
+  outline: 2px solid var(--forge-accent);
+  outline-offset: 2px;
+}
+
+.forge-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary Button (Orange CTA) */
+.forge-btn-primary {
+  background-color: var(--forge-cta);
+  color: var(--forge-text-inverse);
+}
+
+.forge-btn-primary:hover:not(:disabled) {
+  background-color: var(--forge-orange-hover);
+}
+
+.forge-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Secondary Button (White with Border) */
+.forge-btn-secondary {
+  background-color: var(--forge-white);
+  color: var(--forge-text-primary);
+  border: 1px solid var(--forge-border);
+}
+
+.forge-btn-secondary:hover:not(:disabled) {
+  box-shadow: var(--forge-shadow-sm);
+  transform: translateY(-1px);
+}
+
+.forge-btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Ghost Button (Transparent) */
+.forge-btn-ghost {
+  background-color: transparent;
+  color: var(--forge-text-secondary);
+  border: none;
+}
+
+.forge-btn-ghost:hover:not(:disabled) {
+  background-color: var(--forge-gold-light);
+  color: var(--forge-text-primary);
+}
+
+.forge-btn-ghost:active:not(:disabled) {
+  background-color: rgba(212, 175, 122, 0.25);
+}
+
+/* Danger Button (Red) */
+.forge-btn-danger {
+  background-color: #DC2626;
+  color: var(--forge-text-inverse);
+}
+
+.forge-btn-danger:hover:not(:disabled) {
+  background-color: #B91C1C;
+}
+
+.forge-btn-danger:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Small Button Variant */
+.forge-btn-sm {
+  padding: 6px 14px;
+  font-size: 12px;
+}
+
+/* ===========================================
+   4. Input Classes
+   =========================================== */
+.forge-input,
+.forge-select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--forge-border);
+  border-radius: var(--forge-radius-md);
+  font-family: var(--forge-font);
+  font-size: 14px;
+  color: var(--forge-text-primary);
+  background-color: var(--forge-white);
+  transition: var(--forge-transition);
+}
+
+.forge-input:focus,
+.forge-select:focus {
+  outline: none;
+  border-color: var(--forge-accent);
+  box-shadow: 0 0 0 3px var(--forge-gold-light);
+}
+
+.forge-input::placeholder {
+  color: var(--forge-text-secondary);
+  opacity: 0.6;
+}
+
+.forge-input:disabled,
+.forge-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #F5F5F5;
+}
+
+/* Select specific styles */
+.forge-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236F7276' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* Checkbox */
+.forge-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--forge-cta);
+  cursor: pointer;
+  transition: var(--forge-transition);
+}
+
+.forge-checkbox:focus {
+  outline: 2px solid var(--forge-accent);
+  outline-offset: 2px;
+}
+
+/* ===========================================
+   5. Card Classes
+   =========================================== */
+.forge-card {
+  background-color: var(--forge-bg-panel);
+  border: 1px solid var(--forge-border);
+  border-radius: var(--forge-radius-lg);
+  box-shadow: var(--forge-shadow-sm);
+  transition: var(--forge-transition);
+}
+
+.forge-card-selected {
+  background-color: var(--forge-gold-light);
+  border-left: 3px solid var(--forge-accent);
+}
+
+.forge-card-hover:hover {
+  box-shadow: var(--forge-shadow-md);
+  transform: translateY(-2px);
+}
+
+/* ===========================================
+   6. Layout Classes
+   =========================================== */
+.forge-sidebar {
+  background-color: var(--forge-bg-sidebar);
+  display: flex;
+  flex-direction: column;
+  color: var(--forge-text-inverse);
+}
+
+.forge-panel {
+  background-color: var(--forge-bg-panel);
+  border-right: 1px solid var(--forge-border);
+}
+
+.forge-main {
+  background-color: var(--forge-bg-primary);
+  flex: 1;
+}
+
+/* ===========================================
+   7. Utility Classes
+   =========================================== */
+
+/* Flexbox Utilities */
+.forge-flex {
+  display: flex;
+}
+
+.forge-flex-col {
+  flex-direction: column;
+}
+
+.forge-items-center {
+  align-items: center;
+}
+
+.forge-justify-between {
+  justify-content: space-between;
+}
+
+.forge-justify-center {
+  justify-content: center;
+}
+
+.forge-justify-start {
+  justify-content: flex-start;
+}
+
+.forge-justify-end {
+  justify-content: flex-end;
+}
+
+/* Gap Utilities */
+.forge-gap-xs {
+  gap: var(--forge-space-xs);
+}
+
+.forge-gap-sm {
+  gap: var(--forge-space-sm);
+}
+
+.forge-gap-md {
+  gap: var(--forge-space-md);
+}
+
+.forge-gap-lg {
+  gap: var(--forge-space-lg);
+}
+
+.forge-gap-xl {
+  gap: var(--forge-space-xl);
+}
+
+/* Padding Utilities */
+.forge-p-xs {
+  padding: var(--forge-space-xs);
+}
+
+.forge-p-sm {
+  padding: var(--forge-space-sm);
+}
+
+.forge-p-md {
+  padding: var(--forge-space-md);
+}
+
+.forge-p-lg {
+  padding: var(--forge-space-lg);
+}
+
+.forge-p-xl {
+  padding: var(--forge-space-xl);
+}
+
+/* Padding X (horizontal) */
+.forge-px-xs {
+  padding-left: var(--forge-space-xs);
+  padding-right: var(--forge-space-xs);
+}
+
+.forge-px-sm {
+  padding-left: var(--forge-space-sm);
+  padding-right: var(--forge-space-sm);
+}
+
+.forge-px-md {
+  padding-left: var(--forge-space-md);
+  padding-right: var(--forge-space-md);
+}
+
+.forge-px-lg {
+  padding-left: var(--forge-space-lg);
+  padding-right: var(--forge-space-lg);
+}
+
+.forge-px-xl {
+  padding-left: var(--forge-space-xl);
+  padding-right: var(--forge-space-xl);
+}
+
+/* Padding Y (vertical) */
+.forge-py-xs {
+  padding-top: var(--forge-space-xs);
+  padding-bottom: var(--forge-space-xs);
+}
+
+.forge-py-sm {
+  padding-top: var(--forge-space-sm);
+  padding-bottom: var(--forge-space-sm);
+}
+
+.forge-py-md {
+  padding-top: var(--forge-space-md);
+  padding-bottom: var(--forge-space-md);
+}
+
+.forge-py-lg {
+  padding-top: var(--forge-space-lg);
+  padding-bottom: var(--forge-space-lg);
+}
+
+.forge-py-xl {
+  padding-top: var(--forge-space-xl);
+  padding-bottom: var(--forge-space-xl);
+}
+
+/* Text Color Utilities */
+.forge-text-muted {
+  color: var(--forge-text-secondary);
+}
+
+.forge-text-gold {
+  color: var(--forge-accent);
+}
+
+.forge-text-orange {
+  color: var(--forge-cta);
+}
+
+.forge-text-primary {
+  color: var(--forge-text-primary);
+}
+
+.forge-text-inverse {
+  color: var(--forge-text-inverse);
+}
+
+/* Width Utilities */
+.forge-w-full {
+  width: 100%;
+}
+
+.forge-w-auto {
+  width: auto;
+}
+
+/* ===========================================
+   8. Selection Bar (Floating Action Bar)
+   =========================================== */
+.forge-selection-bar {
+  position: fixed;
+  bottom: var(--forge-space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--forge-bg-sidebar);
+  color: var(--forge-text-inverse);
+  padding: var(--forge-space-md) var(--forge-space-lg);
+  border-radius: var(--forge-radius-pill);
+  box-shadow: var(--forge-shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--forge-space-md);
+  z-index: 1000;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.forge-selection-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: var(--forge-radius-pill);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+/* Selection bar content */
+.forge-selection-bar .forge-body {
+  color: var(--forge-text-inverse);
+  font-weight: 500;
+}
+
+/* Selection bar buttons */
+.forge-selection-bar .forge-btn {
+  margin-left: var(--forge-space-sm);
+}
+
+.forge-selection-bar .forge-btn-primary {
+  background-color: var(--forge-cta);
+}
+
+.forge-selection-bar .forge-btn-ghost {
+  color: var(--forge-text-inverse);
+}
+
+.forge-selection-bar .forge-btn-ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
