@@ -1,7 +1,7 @@
 /**
  * FORGE Auth Utilities
  * Centralized authentication helpers for FORGE SaaS
- * Version: 1.1.0
+ * Version: 1.1.1
  * Date: January 2025
  * 
  * Requires: Supabase JS client loaded first
@@ -72,7 +72,7 @@ const ForgeAuth = (function() {
   // ============================================
   // CACHE
   // ============================================
-  // Cache org_id to avoid repeated queries
+  // Cache organization_id to avoid repeated queries
   let cachedOrgId = null;
   let cachedOrgIdUserId = null; // Track which user the cache belongs to
 
@@ -194,7 +194,7 @@ const ForgeAuth = (function() {
       
       // Check cache
       if (cachedOrgId && cachedOrgIdUserId === user.id) {
-        console.log('ForgeAuth.getOrgId: Returning cached org_id', cachedOrgId);
+        console.log('ForgeAuth.getOrgId: Returning cached organization_id', cachedOrgId);
         return cachedOrgId;
       }
       
@@ -202,25 +202,25 @@ const ForgeAuth = (function() {
       const client = getClient();
       const { data, error } = await client
         .from('profiles')
-        .select('org_id')
+        .select('organization_id')
         .eq('id', user.id)
         .single();
       
       if (error) {
-        console.error('ForgeAuth.getOrgId: Error fetching org_id', error);
+        console.error('ForgeAuth.getOrgId: Error fetching organization_id', error);
         return null;
       }
       
-      if (!data || !data.org_id) {
-        console.warn('ForgeAuth.getOrgId: No org_id found for user', user.id);
+      if (!data || !data.organization_id) {
+        console.warn('ForgeAuth.getOrgId: No organization_id found for user', user.id);
         return null;
       }
       
       // Cache result
-      cachedOrgId = data.org_id;
+      cachedOrgId = data.organization_id;
       cachedOrgIdUserId = user.id;
       
-      console.log('ForgeAuth.getOrgId: Retrieved org_id', cachedOrgId);
+      console.log('ForgeAuth.getOrgId: Retrieved organization_id', cachedOrgId);
       return cachedOrgId;
       
     } catch (error) {
@@ -247,7 +247,7 @@ const ForgeAuth = (function() {
       const { data, error } = await client
         .from('subscriptions')
         .select('*')
-        .eq('org_id', orgId)
+        .eq('organization_id', orgId)
         .single();
       
       if (error) {

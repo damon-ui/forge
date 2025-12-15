@@ -1,6 +1,6 @@
 /**
  * FORGE - JavaScript Utility Library
- * Version: 3.2.32
+ * Version: 3.2.33
  * Date: December 12, 2025
  * 
  * Lightweight utility library for date formatting, price calculations, 
@@ -24,7 +24,7 @@ const ForgeUtils = (function() {
   // CONFIGURATION
   // ============================================
   const CONFIG = {
-    VERSION: '3.2.32',
+    VERSION: '3.2.33',
     EMOJI: {
       SHIP: '\u{1F6A2}',
       PLANE: '\u{2708}\u{FE0F}',
