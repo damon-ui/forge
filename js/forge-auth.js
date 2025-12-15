@@ -1,7 +1,7 @@
 /**
  * FORGE Auth Utilities
  * Centralized authentication helpers for FORGE SaaS
- * Version: 1.0.0
+ * Version: 1.1.0
  * Date: January 2025
  * 
  * Requires: Supabase JS client loaded first
@@ -17,10 +17,39 @@ const ForgeAuth = (function() {
   'use strict';
 
   // ============================================
-  // CONFIGURATION
+  // CONFIGURATION - Environment Detection
   // ============================================
-  const SUPABASE_URL = 'https://fcvsadmwtdfvapdmpcsv.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjdnNhZG13dGRmdmFwZG1wY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NzU4NDcsImV4cCI6MjA4MDM1MTg0N30.XOGN7LQmVksy1BheoBRJ8LvtNoEBAww4wnbewHwJu7o';
+  const ENV_CONFIG = {
+    // Production
+    'forgehq.app': {
+      url: 'https://fcvsadmwtdfvapdmpcsv.supabase.co',
+      key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjdnNhZG13dGRmdmFwZG1wY3N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NzU4NDcsImV4cCI6MjA4MDM1MTg0N30.XOGN7LQmVksy1BheoBRJ8LvtNoEBAww4wnbewHwJu7o'
+    },
+    // Dev (Cloudflare preview)
+    'dev.forge-saas.pages.dev': {
+      url: 'https://jlsqhjmyidplbianuhzh.supabase.co',
+      key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsc3Foam15aWRwbGJpYW51aHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3OTU0OTQsImV4cCI6MjA4MTM3MTQ5NH0.Al4evxdYbn1fn8P9NLJsd1IzMkslK0ks8cwGEE1Wc_4'
+    },
+    // Local development
+    'localhost': {
+      url: 'https://jlsqhjmyidplbianuhzh.supabase.co',
+      key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsc3Foam15aWRwbGJpYW51aHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3OTU0OTQsImV4cCI6MjA4MTM3MTQ5NH0.Al4evxdYbn1fn8P9NLJsd1IzMkslK0ks8cwGEE1Wc_4'
+    },
+    // 127.0.0.1 (alternate localhost)
+    '127.0.0.1': {
+      url: 'https://jlsqhjmyidplbianuhzh.supabase.co',
+      key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impsc3Foam15aWRwbGJpYW51aHpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3OTU0OTQsImV4cCI6MjA4MTM3MTQ5NH0.Al4evxdYbn1fn8P9NLJsd1IzMkslK0ks8cwGEE1Wc_4'
+    }
+  };
+
+  // Detect environment from hostname
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const config = ENV_CONFIG[hostname] || ENV_CONFIG['localhost'];
+  const SUPABASE_URL = config.url;
+  const SUPABASE_ANON_KEY = config.key;
+  
+  // Log which environment is active
+  console.log('ForgeAuth: Environment detected as', hostname, '-> Supabase:', SUPABASE_URL.split('//')[1].split('.')[0]);
 
   // ============================================
   // INITIALIZATION
