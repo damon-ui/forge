@@ -23,6 +23,16 @@
   --btn-create: #6B8E6B;
   --btn-danger: #C4756E;
   --btn-special: #8B7093;
+
+  /* FORGE SaaS palette (from Itinerary) */
+  --forge-charcoal: #1C2A3A;
+  --forge-orange: #E85A24;
+  --forge-orange-hover: #D14E1A;
+  --forge-gold: #D4AF7A;
+  --forge-gold-light: rgba(212, 175, 122, 0.15);
+  --forge-border: #E5E5E5;
+  --forge-muted: #6F7276;
+  --forge-cream: #FAF9F7;
 }
 
 /* ===========================================
@@ -126,31 +136,155 @@ body.has-sticky-toolbar #mainContent {
 }
 
 /* ===========================================
-   6. Modal Styles
+   6. Modal Styles (from Itinerary)
    =========================================== */
 .modal-backdrop {
-  display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  z-index: 100;
+  z-index: 50;
 }
 
-.modal-backdrop.active {
-  display: flex;
+.modal-backdrop.hidden {
+  display: none;
 }
 
 .modal-content {
   background: white;
-  border-radius: 16px;
-  max-width: 400px;
-  width: 100%;
-  padding: 24px;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  max-width: 640px;
+  width: 95%;
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+/* Hero image modal uses flex layout */
+#heroImageModal .modal-content,
+#imageModal .modal-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 90vh;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--forge-border);
+  flex-shrink: 0;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--forge-border);
+  flex-shrink: 0;
+}
+
+/* Hero Image Modal Styles */
+.image-modal-divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  color: var(--forge-muted);
+  font-size: 0.875rem;
+  position: relative;
+}
+
+.image-modal-divider::before,
+.image-modal-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: calc(50% - 2rem);
+  height: 1px;
+  background: var(--forge-border);
+}
+
+.image-modal-divider::before {
+  left: 0;
+}
+
+.image-modal-divider::after {
+  right: 0;
+}
+
+.image-option-btn {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px dashed var(--forge-gold);
+  border-radius: 8px;
+  background: white;
+  color: var(--forge-charcoal);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.image-option-btn:hover {
+  border-color: var(--forge-orange);
+  background: rgba(232, 90, 36, 0.05);
+  color: var(--forge-orange);
+}
+
+.unsplash-search-container {
+  margin-top: 1rem;
+}
+
+.unsplash-search-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid var(--forge-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.unsplash-search-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.unsplash-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  max-height: 250px;
+  overflow-y: auto;
+  margin-top: 1rem;
+}
+
+.unsplash-thumbnail {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.unsplash-thumbnail:hover {
+  border-color: var(--forge-gold);
+  transform: scale(1.05);
+}
+
+.unsplash-thumbnail.selected {
+  border-color: var(--forge-orange);
+  box-shadow: 0 0 0 2px rgba(232, 90, 36, 0.2);
 }
 
 /* ===========================================
@@ -305,35 +439,43 @@ body.has-sticky-toolbar #mainContent {
 .unsplash-credit { font-size: 0.65rem; color: #9ca3af; text-align: center; margin-top: 0.5rem; }
 .unsplash-credit a { color: #6b7280; }
 
-/* ===== Form Elements ===== */
-.form-input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--trnt-border);
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--trnt-link);
-  box-shadow: 0 0 0 3px rgba(94, 169, 216, 0.2);
-}
-
+/* ===== Form Elements (from Itinerary) ===== */
 .form-label {
   display: block;
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--trnt-secondary);
+  font-weight: 500;
+  color: var(--forge-muted);
   margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--forge-border);
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: var(--forge-charcoal);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--forge-orange);
+  box-shadow: 0 0 0 1px rgba(232, 90, 36, 0.3);
+}
+
+.form-textarea {
+  min-height: auto;
+  resize: vertical;
 }
 
 .form-select {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--trnt-border);
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
   background: white;
 }
 
