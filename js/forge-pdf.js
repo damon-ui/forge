@@ -9,7 +9,7 @@
 (function() {
   'use strict';
 
-  const WORKER_URL = 'https://trnt-pdf.trnt.workers.dev';
+  const WORKER_URL = 'https://trnt-pdf.damon-be2.workers.dev';
 
   /**
    * Download PDF of current page
