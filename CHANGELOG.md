@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.38] - 2025-12-19
+
+### Added
+
+- **ForgePdf** - PDF download utility for client-facing pages
+  - `ForgePdf.download(filename, buttonElement)` - Generates PDF via trnt-pdf worker
+  - Handles button loading state automatically
+
+### Changed
+
+- Added `.no-print` utility class and `@media print` styles to forge-common.css
+
+---
+
 ## [3.2.30] - 2025-12-13
 
 ### Added

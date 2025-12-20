@@ -399,6 +399,9 @@ body.has-sticky-toolbar #mainContent {
   /* Hide admin headers and PDF buttons (shared across tools) */
   #adminHeader, .pdf-download-section, .image-overlay { display: none !important; }
 
+  /* Hide elements with no-print class (voting sections, buttons, etc.) */
+  .no-print { display: none !important; }
+
   /* Remove Squarespace wrapper padding */
   .content-wrapper, .page-section, .sqs-layout {
     padding: 0 !important;
@@ -421,6 +424,39 @@ body.has-sticky-toolbar #mainContent {
     margin-right: 0 !important;
     width: 100% !important;
     border-radius: 0.5rem !important;
+    max-height: 200px !important;
+    height: auto !important;
+  }
+
+  /* Comparison table print styles */
+  .comparison-table {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+
+  .table-row {
+    page-break-inside: avoid;
+  }
+
+  .table-cell,
+  .table-label {
+    border: 1px solid #ddd !important;
+  }
+
+  /* Remove shadows and rounded corners for cleaner print */
+  * {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Ensure table borders print properly */
+  .comparison-table,
+  .table-row,
+  .table-cell,
+  .table-label,
+  .option-header {
+    border-color: #000 !important;
   }
 }
 
