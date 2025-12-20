@@ -2,7 +2,7 @@
  * FORGE PDF Utility
  * Simple wrapper for trnt-pdf Cloudflare Worker
  * 
- * @version 1.0.0
+ * @version 1.0.1
  * CDN: https://cdn.jsdelivr.net/gh/damon-ui/forge@main/js/forge-pdf.js
  */
 
