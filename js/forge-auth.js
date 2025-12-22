@@ -1,7 +1,7 @@
 /**
  * FORGE Auth Utilities
  * Centralized authentication helpers for FORGE SaaS
- * Version: 1.1.1
+ * Version: 1.2.0
  * Date: January 2025
  * 
  * Requires: Supabase JS client loaded first
@@ -75,6 +75,8 @@ const ForgeAuth = (function() {
   // Cache organization_id to avoid repeated queries
   let cachedOrgId = null;
   let cachedOrgIdUserId = null; // Track which user the cache belongs to
+  let cachedPlatformRole = null;
+  let cachedPlatformRoleUserId = null;
 
   // ============================================
   // PRIVATE HELPERS
@@ -91,11 +93,13 @@ const ForgeAuth = (function() {
   }
 
   /**
-   * Clear org_id cache when user changes
+   * Clear all caches when user changes
    */
-  function clearOrgIdCache() {
+  function clearCache() {
     cachedOrgId = null;
     cachedOrgIdUserId = null;
+    cachedPlatformRole = null;
+    cachedPlatformRoleUserId = null;
   }
 
   // ============================================
@@ -167,7 +171,7 @@ const ForgeAuth = (function() {
       }
       
       // Clear cache
-      clearOrgIdCache();
+      clearCache();
       
       // Redirect to login
       window.location.href = redirectUrl;
@@ -198,11 +202,11 @@ const ForgeAuth = (function() {
         return cachedOrgId;
       }
       
-      // Query profiles table
+      // Query profiles table (fetch both organization_id and platform_role)
       const client = getClient();
       const { data, error } = await client
         .from('profiles')
-        .select('organization_id')
+        .select('organization_id, platform_role')
         .eq('id', user.id)
         .single();
       
@@ -216,9 +220,15 @@ const ForgeAuth = (function() {
         return null;
       }
       
-      // Cache result
+      // Cache both results
       cachedOrgId = data.organization_id;
       cachedOrgIdUserId = user.id;
+      
+      // Also cache platform_role if we got it
+      if (data.platform_role) {
+        cachedPlatformRole = data.platform_role;
+        cachedPlatformRoleUserId = user.id;
+      }
       
       console.log('ForgeAuth.getOrgId: Retrieved organization_id', cachedOrgId);
       return cachedOrgId;
@@ -312,6 +322,73 @@ const ForgeAuth = (function() {
     }
   }
 
+  /**
+   * Get user's platform role (from profiles table)
+   * Caches result to avoid repeated queries
+   * @returns {Promise<string|null>} Platform role ('user', 'admin', 'super_admin') or null
+   */
+  async function getPlatformRole() {
+    try {
+      const user = await getUser();
+      
+      if (!user || !user.id) {
+        console.log('ForgeAuth.getPlatformRole: No user found');
+        return null;
+      }
+      
+      // Check cache
+      if (cachedPlatformRole && cachedPlatformRoleUserId === user.id) {
+        console.log('ForgeAuth.getPlatformRole: Returning cached platform_role', cachedPlatformRole);
+        return cachedPlatformRole;
+      }
+      
+      // Query profiles table
+      const client = getClient();
+      const { data, error } = await client
+        .from('profiles')
+        .select('platform_role')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('ForgeAuth.getPlatformRole: Error fetching platform_role', error);
+        return null;
+      }
+      
+      // Default to 'user' if not set
+      const role = data?.platform_role || 'user';
+      
+      // Cache result
+      cachedPlatformRole = role;
+      cachedPlatformRoleUserId = user.id;
+      
+      console.log('ForgeAuth.getPlatformRole: Retrieved platform_role', cachedPlatformRole);
+      return cachedPlatformRole;
+      
+    } catch (error) {
+      console.error('ForgeAuth.getPlatformRole: Exception', error);
+      return null;
+    }
+  }
+
+  /**
+   * Check if current user is a super admin
+   * @returns {Promise<boolean>} True if user is super_admin
+   */
+  async function isSuperAdmin() {
+    const role = await getPlatformRole();
+    return role === 'super_admin';
+  }
+
+  /**
+   * Check if current user is an admin or super admin
+   * @returns {Promise<boolean>} True if user is admin or super_admin
+   */
+  async function isAdmin() {
+    const role = await getPlatformRole();
+    return role === 'admin' || role === 'super_admin';
+  }
+
   // ============================================
   // EXPORT
   // ============================================
@@ -322,7 +399,10 @@ const ForgeAuth = (function() {
     signOut,
     getOrgId,
     getSubscription,
-    isSubscriptionActive
+    isSubscriptionActive,
+    getPlatformRole,
+    isSuperAdmin,
+    isAdmin
   };
 
 })();
