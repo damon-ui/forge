@@ -416,6 +416,9 @@ const ForgeImageModal = (function() {
             class="form-input" 
             placeholder="https://example.com/image.jpg"
           >
+          <p style="font-size: 11px; color: var(--forge-muted, #6F7276); margin-top: 6px; line-height: 1.4;">
+            <strong>Tip:</strong> Right-click any image on a website and select "Copy image address" to get the URL.
+          </p>
         </div>
 
         <div class="image-modal-divider">— or —</div>
