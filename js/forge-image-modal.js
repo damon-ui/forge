@@ -1,11 +1,14 @@
 /**
  * ForgeImageModal - Hero Image Modal Component
  * 
- * Extracted from Itinerary implementation with improvements:
- * - Better styling matching FORGE aesthetic (charcoal/gold/orange/cream)
- * - Unsplash search with larger, more visible results (8 results, larger thumbnails)
- * - File upload with base64 conversion
+ * Features:
+ * - Paste from clipboard (Cmd+V after copying any image)
+ * - Drag & drop images
+ * - File upload from device
  * - URL paste functionality
+ * - Unsplash search
+ * - Client-side compression before upload
+ * - R2 cloud storage (images hosted by FORGE)
  * 
  * Dependencies:
  * - forge-common.css (must be loaded for modal styling)
@@ -16,7 +19,9 @@
  *   ForgeImageModal.open({
  *     currentUrl: 'https://...',
  *     title: 'Change Hero Image',
- *     onSave: (url) => { ... }
+ *     onSave: (url) => { ... },
+ *     advisorId: 'abc123',  // Optional: for organizing uploads
+ *     category: 'ships'     // Optional: ships, hotels, destinations, misc
  *   });
  */
 
@@ -25,14 +30,22 @@ const ForgeImageModal = (function() {
 
   // ===== CONFIGURATION =====
   const UNSPLASH_WORKER_URL = 'https://trnt-unsplash.damon-be2.workers.dev';
-  const UNSPLASH_RESULTS_COUNT = 8; // Show 8 results instead of 12
-  const UNSPLASH_THUMBNAIL_SIZE = 160; // Larger thumbnails (was 120px)
+  const IMAGE_UPLOAD_WORKER_URL = 'https://forge-image-upload.damon-be2.workers.dev';
+  const UNSPLASH_RESULTS_COUNT = 8;
+  const UNSPLASH_THUMBNAIL_SIZE = 160;
+  
+  // Compression settings
+  const MAX_IMAGE_DIMENSION = 1600; // Max width or height
+  const JPEG_QUALITY = 0.85;        // 85% quality
+  const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB after compression
 
   // ===== STATE =====
   let modalId = 'imageModal';
   let modalElement = null;
   let currentCallback = null;
-  let unsplashPhotos = []; // Store photo data for selection
+  let currentOptions = {};
+  let unsplashPhotos = [];
+  let isUploading = false;
 
   // ===== PUBLIC API =====
 
@@ -68,6 +81,10 @@ const ForgeImageModal = (function() {
     }
 
     currentCallback = options.onSave || null;
+    currentOptions = {
+      advisorId: options.advisorId || 'shared',
+      category: options.category || 'misc'
+    };
 
     // Pre-fill URL input
     const urlInput = modalElement.querySelector('[data-image-url]');
@@ -84,6 +101,7 @@ const ForgeImageModal = (function() {
     // Reset state
     resetUploadStatus();
     resetUnsplashSearch();
+    hideUploadProgress();
 
     // Show modal
     modalElement.classList.remove('hidden');
@@ -115,11 +133,13 @@ const ForgeImageModal = (function() {
 
     modalElement.classList.add('hidden');
     currentCallback = null;
+    currentOptions = {};
     unsplashPhotos = [];
+    isUploading = false;
   }
 
   function save() {
-    if (!modalElement) return;
+    if (!modalElement || isUploading) return;
 
     const urlInput = modalElement.querySelector('[data-image-url]');
     if (!urlInput) return;
@@ -140,33 +160,236 @@ const ForgeImageModal = (function() {
     close();
   }
 
-  // ===== FILE UPLOAD =====
+  // ===== IMAGE COMPRESSION =====
 
-  function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+  async function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        
+        if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+          if (width > height) {
+            height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
+            width = MAX_IMAGE_DIMENSION;
+          } else {
+            width = Math.round((width * MAX_IMAGE_DIMENSION) / height);
+            height = MAX_IMAGE_DIMENSION;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to compress image'));
+            }
+          },
+          'image/jpeg',
+          JPEG_QUALITY
+        );
+      };
+
+      img.onerror = () => reject(new Error('Failed to load image for compression'));
+
+      // Load image from file
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ===== R2 UPLOAD =====
+
+  async function uploadToR2(blob, filename) {
+    const formData = new FormData();
+    formData.append('file', blob, filename || 'image.jpg');
+    formData.append('advisor_id', currentOptions.advisorId || 'shared');
+    formData.append('category', currentOptions.category || 'misc');
+
+    const response = await fetch(`${IMAGE_UPLOAD_WORKER_URL}/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || `Upload failed: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.error || 'Upload failed');
+    }
+
+    return result.url;
+  }
+
+  // ===== UPLOAD PROGRESS UI =====
+
+  function showUploadProgress(message = 'Uploading...') {
+    isUploading = true;
+    const progressEl = modalElement?.querySelector('[data-upload-progress]');
+    const progressText = modalElement?.querySelector('[data-upload-text]');
+    if (progressEl) {
+      progressEl.classList.remove('hidden');
+      if (progressText) progressText.textContent = message;
+    }
+    
+    // Disable save button during upload
+    const saveBtn = modalElement?.querySelector('[data-save-btn]');
+    if (saveBtn) saveBtn.disabled = true;
+  }
+
+  function hideUploadProgress() {
+    isUploading = false;
+    const progressEl = modalElement?.querySelector('[data-upload-progress]');
+    if (progressEl) {
+      progressEl.classList.add('hidden');
+    }
+    
+    // Re-enable save button
+    const saveBtn = modalElement?.querySelector('[data-save-btn]');
+    if (saveBtn) saveBtn.disabled = false;
+  }
+
+  // ===== PROCESS IMAGE (compress + upload) =====
+
+  async function processAndUploadImage(file) {
+    if (isUploading) return;
 
     // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      showToast('Invalid file type. Please select JPG, PNG, or WebP', 'error');
+      showToast('Invalid file type. Please use JPG, PNG, or WebP', 'error');
       return;
     }
 
-    // Convert to base64 data URL
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
+    try {
+      showUploadProgress('Compressing...');
+
+      // Compress the image
+      const compressedBlob = await compressImage(file);
+      
+      // Check size after compression
+      if (compressedBlob.size > MAX_FILE_SIZE) {
+        hideUploadProgress();
+        showToast('Image too large even after compression. Try a smaller image.', 'error');
+        return;
+      }
+
+      showUploadProgress('Uploading...');
+
+      // Upload to R2
+      const url = await uploadToR2(compressedBlob, file.name);
+
+      // Set the URL in the input
       const urlInput = modalElement?.querySelector('[data-image-url]');
       if (urlInput) {
-        urlInput.value = dataUrl;
+        urlInput.value = url;
       }
-      showToast('Image loaded', 'success');
-    };
-    reader.onerror = () => {
-      showToast('Failed to load image', 'error');
-    };
-    reader.readAsDataURL(file);
+
+      hideUploadProgress();
+      showToast('Image uploaded!', 'success');
+
+    } catch (error) {
+      console.error('Image upload error:', error);
+      hideUploadProgress();
+      showToast(error.message || 'Failed to upload image', 'error');
+    }
+  }
+
+  // ===== CLIPBOARD PASTE =====
+
+  async function handlePaste(event) {
+    if (!modalElement || isUploading) return;
+    
+    // Only handle paste when modal is visible
+    if (modalElement.classList.contains('hidden')) return;
+
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        event.preventDefault();
+        const file = item.getAsFile();
+        if (file) {
+          await processAndUploadImage(file);
+        }
+        return;
+      }
+    }
+    
+    // If no image in clipboard, let normal paste happen (for URL text)
+  }
+
+  // ===== DRAG & DROP =====
+
+  function handleDragOver(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = modalElement?.querySelector('[data-drop-zone]');
+    if (dropZone) {
+      dropZone.classList.add('drag-over');
+    }
+  }
+
+  function handleDragLeave(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = modalElement?.querySelector('[data-drop-zone]');
+    if (dropZone) {
+      dropZone.classList.remove('drag-over');
+    }
+  }
+
+  async function handleDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const dropZone = modalElement?.querySelector('[data-drop-zone]');
+    if (dropZone) {
+      dropZone.classList.remove('drag-over');
+    }
+
+    if (isUploading) return;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        await processAndUploadImage(file);
+      } else {
+        showToast('Please drop an image file', 'error');
+      }
+    }
+  }
+
+  // ===== FILE UPLOAD (via button) =====
+
+  async function handleFileUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    await processAndUploadImage(file);
+    
+    // Reset file input
+    event.target.value = '';
   }
 
   function resetUploadStatus() {
@@ -186,36 +409,21 @@ const ForgeImageModal = (function() {
     container.classList.toggle('hidden');
 
     if (wasHidden) {
-      // Container is now visible - scroll modal body to show search input
       setTimeout(() => {
         const modalBody = modalElement.querySelector('.modal-body');
         const searchRow = container.querySelector('.unsplash-search-row');
 
         if (modalBody && searchRow) {
-          // Calculate position of search row relative to modal body
           const modalBodyRect = modalBody.getBoundingClientRect();
           const searchRowRect = searchRow.getBoundingClientRect();
-
-          // Scroll to position the search row near the top of visible area
           const scrollOffset = searchRowRect.top - modalBodyRect.top + modalBody.scrollTop - 20;
-
-          modalBody.scrollTo({
-            top: scrollOffset,
-            behavior: 'smooth'
-          });
-        } else if (searchRow) {
-          // Fallback: try scrollIntoView if modal-body not found
-          searchRow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          modalBody.scrollTo({ top: scrollOffset, behavior: 'smooth' });
         }
 
-        // Focus the input
         const input = container.querySelector('[data-unsplash-query]');
-        if (input) {
-          input.focus();
-        }
+        if (input) input.focus();
       }, 100);
     } else {
-      // Container is now hidden - clear search state
       const input = container.querySelector('[data-unsplash-query]');
       const resultsDiv = container.querySelector('[data-unsplash-results]');
       if (input) input.value = '';
@@ -242,7 +450,6 @@ const ForgeImageModal = (function() {
     resultsDiv.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--forge-muted);">Loading...</div>';
 
     try {
-      // Use GET request with URLSearchParams
       const url = `${UNSPLASH_WORKER_URL}/search?` +
         new URLSearchParams({
           query: query,
@@ -252,9 +459,7 @@ const ForgeImageModal = (function() {
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/json'
-        }
+        headers: { 'Accept': 'application/json' }
       });
 
       if (!response.ok) {
@@ -268,11 +473,9 @@ const ForgeImageModal = (function() {
         return;
       }
 
-      // Store photo data
       unsplashPhotos = data.results;
-
-      // Render results
       resultsDiv.innerHTML = '';
+      
       data.results.forEach((photo, index) => {
         const wrapper = document.createElement('div');
         wrapper.style.position = 'relative';
@@ -288,10 +491,7 @@ const ForgeImageModal = (function() {
         resultsDiv.appendChild(wrapper);
       });
 
-      // Recreate icons if needed
-      if (window.lucide && typeof window.lucide.createIcons === 'function') {
-        window.lucide.createIcons();
-      }
+      if (window.lucide?.createIcons) window.lucide.createIcons();
 
     } catch (err) {
       console.error('Unsplash search error:', err);
@@ -304,20 +504,14 @@ const ForgeImageModal = (function() {
     const photo = unsplashPhotos[index];
     if (!photo) return;
 
-    // Update URL input with selected image (use regular size, not full)
     const urlInput = modalElement?.querySelector('[data-image-url]');
     if (urlInput) {
       urlInput.value = photo.urls.regular;
     }
 
-    // Highlight selected thumbnail
     const thumbnails = modalElement?.querySelectorAll('.unsplash-thumbnail');
     thumbnails?.forEach((thumb, idx) => {
-      if (idx === index) {
-        thumb.classList.add('selected');
-      } else {
-        thumb.classList.remove('selected');
-      }
+      thumb.classList.toggle('selected', idx === index);
     });
 
     showToast('Image selected', 'success');
@@ -345,9 +539,7 @@ const ForgeImageModal = (function() {
 
     // Close on backdrop click
     modalElement.addEventListener('click', (e) => {
-      if (e.target === modalElement) {
-        close();
-      }
+      if (e.target === modalElement) close();
     });
 
     // File upload handler
@@ -366,24 +558,30 @@ const ForgeImageModal = (function() {
         }
       });
     }
+
+    // Drag & drop on drop zone
+    const dropZone = modalElement.querySelector('[data-drop-zone]');
+    if (dropZone) {
+      dropZone.addEventListener('dragover', handleDragOver);
+      dropZone.addEventListener('dragleave', handleDragLeave);
+      dropZone.addEventListener('drop', handleDrop);
+    }
+
+    // Global paste listener (works when modal is open)
+    document.addEventListener('paste', handlePaste);
   }
 
   // ===== UTILITIES =====
 
   function showToast(message, type = 'success') {
-    // Try to use ForgeUtils.UI.showToast if available
-    if (typeof ForgeUtils !== 'undefined' && ForgeUtils.UI && ForgeUtils.UI.showToast) {
+    if (typeof ForgeUtils !== 'undefined' && ForgeUtils.UI?.showToast) {
       ForgeUtils.UI.showToast(message, type);
       return;
     }
-
-    // Fallback: try window.showToast
     if (typeof window.showToast === 'function') {
       window.showToast(message, type);
       return;
     }
-
-    // Last resort: console log
     console.log(`[${type.toUpperCase()}] ${message}`);
   }
 
@@ -395,7 +593,7 @@ const ForgeImageModal = (function() {
   <div class="modal-content" onclick="event.stopPropagation()">
     <div class="modal-header">
       <div class="flex items-center justify-between">
-        <h3 data-modal-title class="text-lg font-semibold">Change Hero Image</h3>
+        <h3 data-modal-title class="text-lg font-semibold">Change Image</h3>
         <button onclick="ForgeImageModal.close()" class="text-gray-400 hover:text-gray-600">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
@@ -404,6 +602,30 @@ const ForgeImageModal = (function() {
     
     <div class="modal-body">
       <div class="space-y-4">
+        
+        <!-- Upload Progress Indicator -->
+        <div data-upload-progress class="hidden">
+          <div class="upload-progress-bar">
+            <div class="upload-progress-spinner"></div>
+            <span data-upload-text>Uploading...</span>
+          </div>
+        </div>
+        
+        <!-- Drop Zone (also handles paste) -->
+        <div data-drop-zone class="drop-zone">
+          <div class="drop-zone-content">
+            <i data-lucide="image-plus" class="w-8 h-8 text-gray-400 mb-2"></i>
+            <p class="drop-zone-text">
+              <strong>Drop image here</strong> or <strong>paste from clipboard</strong>
+            </p>
+            <p class="drop-zone-hint">
+              Tip: Copy any image from the web, then press Cmd+V (Mac) or Ctrl+V (Windows)
+            </p>
+          </div>
+        </div>
+
+        <div class="image-modal-divider">\u2014 or \u2014</div>
+
         <!-- Option 1: Paste URL -->
         <div>
           <label class="form-label" for="${modalId}-image-url" style="color: var(--forge-gold); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block;">
@@ -416,12 +638,9 @@ const ForgeImageModal = (function() {
             class="form-input" 
             placeholder="https://example.com/image.jpg"
           >
-          <p style="font-size: 11px; color: var(--forge-muted, #6F7276); margin-top: 6px; line-height: 1.4;">
-            <strong>Tip:</strong> Right-click any image on a website and select "Copy image address" to get the URL.
-          </p>
         </div>
 
-        <div class="image-modal-divider">— or —</div>
+        <div class="image-modal-divider">\u2014 or \u2014</div>
 
         <!-- Option 2: Upload from Device -->
         <div>
@@ -436,11 +655,12 @@ const ForgeImageModal = (function() {
             class="image-option-btn" 
             onclick="document.querySelector('#${modalId} [data-file-input]').click()"
           >
+            <i data-lucide="upload" class="w-4 h-4"></i>
             Upload from Device
           </button>
         </div>
 
-        <div class="image-modal-divider">— or —</div>
+        <div class="image-modal-divider">\u2014 or \u2014</div>
 
         <!-- Option 3: Search Unsplash -->
         <div>
@@ -449,6 +669,7 @@ const ForgeImageModal = (function() {
             class="image-option-btn" 
             onclick="ForgeImageModal.toggleUnsplashSearch()"
           >
+            <i data-lucide="search" class="w-4 h-4"></i>
             Search Unsplash
           </button>
           
@@ -458,7 +679,7 @@ const ForgeImageModal = (function() {
                 type="text" 
                 data-unsplash-query 
                 class="unsplash-search-input" 
-                placeholder="Search for images (e.g., 'beach sunset', 'mountain landscape')"
+                placeholder="Search (e.g., 'cruise ship', 'beach resort')"
               >
               <button 
                 type="button" 
@@ -485,6 +706,7 @@ const ForgeImageModal = (function() {
         </button>
         <button 
           type="button" 
+          data-save-btn
           onclick="ForgeImageModal.save()" 
           class="px-4 py-1.5 rounded-full text-xs font-semibold text-white bg-[var(--forge-orange)] hover:bg-[var(--forge-orange-hover)]"
         >
@@ -500,13 +722,12 @@ const ForgeImageModal = (function() {
   // ===== CSS INJECTION =====
 
   function injectStyles() {
-    // Check if styles already injected
     if (document.getElementById('forge-image-modal-styles')) return;
 
     const style = document.createElement('style');
     style.id = 'forge-image-modal-styles';
     style.textContent = `
-      /* Modal flex layout (matches Itinerary) */
+      /* Modal flex layout */
       #${modalId} .modal-content {
         padding: 0;
         display: flex;
@@ -515,7 +736,92 @@ const ForgeImageModal = (function() {
         max-height: 90vh;
       }
       
-      /* Unsplash thumbnail styles */
+      /* Drop Zone */
+      .drop-zone {
+        border: 2px dashed var(--forge-border, #E5E5E5);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.2s ease;
+        background: var(--forge-cream, #FAF9F7);
+        cursor: pointer;
+      }
+      
+      .drop-zone:hover,
+      .drop-zone.drag-over {
+        border-color: var(--forge-gold, #D4AF7A);
+        background: rgba(212, 175, 122, 0.1);
+      }
+      
+      .drop-zone-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        pointer-events: none;
+      }
+      
+      .drop-zone-text {
+        font-size: 0.875rem;
+        color: var(--forge-charcoal, #1C2A3A);
+        margin: 0;
+      }
+      
+      .drop-zone-hint {
+        font-size: 0.75rem;
+        color: var(--forge-muted, #6F7276);
+        margin-top: 0.5rem;
+      }
+      
+      /* Upload Progress */
+      .upload-progress-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(212, 175, 122, 0.15);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: var(--forge-charcoal, #1C2A3A);
+      }
+      
+      .upload-progress-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--forge-border, #E5E5E5);
+        border-top-color: var(--forge-gold, #D4AF7A);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      /* Image option buttons */
+      .image-option-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--forge-border, #E5E5E5);
+        border-radius: 8px;
+        background: white;
+        color: var(--forge-charcoal, #1C2A3A);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      
+      .image-option-btn:hover {
+        border-color: var(--forge-gold, #D4AF7A);
+        background: rgba(212, 175, 122, 0.1);
+      }
+      
+      /* Unsplash thumbnails */
       .unsplash-thumbnail {
         width: 100%;
         aspect-ratio: 1;
@@ -536,7 +842,6 @@ const ForgeImageModal = (function() {
         box-shadow: 0 0 0 2px rgba(232, 90, 36, 0.2);
       }
       
-      /* Unsplash results grid with larger thumbnails */
       .unsplash-results {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(${UNSPLASH_THUMBNAIL_SIZE}px, 1fr));
@@ -544,6 +849,14 @@ const ForgeImageModal = (function() {
         max-height: 300px;
         overflow-y: auto;
         margin-top: 1rem;
+      }
+      
+      /* Divider */
+      .image-modal-divider {
+        text-align: center;
+        color: var(--forge-muted, #6F7276);
+        font-size: 0.75rem;
+        margin: 0.5rem 0;
       }
     `;
     document.head.appendChild(style);
