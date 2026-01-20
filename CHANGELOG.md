@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] - forge-saas
+
+### Changed
+
+- **Itinerary Cards** - Removed created date display from admin portal cards (matches Options/Comparisons pattern)
+- **AI Enrich Button** - Changed from purple gradient to FORGE orange, shows dynamic item count ("Apply 11 Items")
+
+---
+
 ## [3.2.38] - 2025-12-19
 
 ### Added
