@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.42] - 2026-01-26
+
+### Added - Mobile MVM (TRN-578)
+- **Mobile utilities** (`mobile.js`): `isMobile()`, `isTouchDevice()`, `onMobileChange()`, `emailMeLink()`
+- **Share utilities** (`share.js`): `shareOrCopy()` with native share sheet support
+- **Admin hamburger menu**: Slide-out navigation on mobile (<768px)
+- **CRM mobile modal**: Read-only client detail view with contact links and deep link support
+- **Mobile list views**: Comparisons and Itineraries with Copy Link/Preview actions
+- **Desktop gates**: 9 tools gated on mobile with "Email Me This Link" escape hatch
+- **PWA support**: manifest.json + app icons for "Add to Home Screen"
+- **Mobile nav management**: Hide Stats/Payments/Commissions, gate Options/Forms/Settings
+
+---
+
 ## [Unreleased] - forge-saas
 
 ### Changed
