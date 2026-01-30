@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [3.2.42] - 2026-01-26
+## [3.2.42] - 2026-01-30
+
+### Fixed
+
+- **Race condition in ForgeAuth** (TRN-606) - `getSession()` could return null before Supabase restored session from localStorage
+  - Added `INITIAL_SESSION` event listener with 5-second timeout protection
+  - Prevents incorrect redirects to login page for authenticated users
+
+### Changed
+
+- Version display updated to 3.2.42
+
+---
+
+## [3.2.41] - 2026-01-26
 
 ### Added - Mobile MVM (TRN-578)
 - **Mobile utilities** (`mobile.js`): `isMobile()`, `isTouchDevice()`, `onMobileChange()`, `emailMeLink()`
@@ -237,4 +251,4 @@ FORGE follows [Semantic Versioning](https://semver.org/):
 
 ---
 
-**Last Updated:** November 19, 2025
+**Last Updated:** January 30, 2026
