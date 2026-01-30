@@ -1,8 +1,8 @@
 /**
  * FORGE Auth Utilities
  * Centralized authentication helpers for FORGE SaaS
- * Version: 1.2.0
- * Date: January 2025
+ * Version: 1.3.0
+ * Date: January 2026
  * 
  * Requires: Supabase JS client loaded first
  * 
@@ -58,15 +58,49 @@ const ForgeAuth = (function() {
   // Assumes supabase.createClient is available globally
   let supabaseClient = null;
   
+  // Session ready state - prevents race condition where getSession() is called
+  // before Supabase has restored the session from localStorage (TRN-606)
+  let sessionReady = false;
+  let sessionReadyResolve = null;
+  const sessionReadyPromise = new Promise(resolve => {
+    sessionReadyResolve = resolve;
+  });
+
   try {
     if (typeof supabase !== 'undefined' && supabase.createClient) {
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       console.log('ForgeAuth: Supabase client initialized');
+
+      // Set up timeout - if INITIAL_SESSION never fires, proceed anyway after 5 seconds
+      const sessionTimeout = setTimeout(() => {
+        if (!sessionReady) {
+          console.warn('ForgeAuth: INITIAL_SESSION timeout after 5s, proceeding without session');
+          sessionReady = true;
+          sessionReadyResolve(null);
+        }
+      }, 5000);
+
+      // Listen for INITIAL_SESSION event - this fires when Supabase has finished
+      // restoring the session from localStorage
+      supabaseClient.auth.onAuthStateChange((event, session) => {
+        if (event === 'INITIAL_SESSION') {
+          clearTimeout(sessionTimeout);
+          sessionReady = true;
+          sessionReadyResolve(session);
+          console.log('ForgeAuth: INITIAL_SESSION received, session ready');
+        }
+      });
     } else {
       console.error('ForgeAuth: Supabase JS client not loaded. Please include Supabase JS before this script.');
+      // Mark session as ready (with null) so getSession() doesn't hang
+      sessionReady = true;
+      sessionReadyResolve(null);
     }
   } catch (error) {
     console.error('ForgeAuth: Failed to initialize Supabase client', error);
+    // Mark session as ready (with null) so getSession() doesn't hang
+    sessionReady = true;
+    sessionReadyResolve(null);
   }
 
   // ============================================
@@ -108,18 +142,25 @@ const ForgeAuth = (function() {
 
   /**
    * Get current session (returns null if not logged in)
+   * Waits for INITIAL_SESSION event before checking, to prevent race condition (TRN-606)
    * @returns {Promise<Object|null>} Session object or null
    */
   async function getSession() {
     try {
+      // Wait for Supabase to finish restoring session from localStorage
+      if (!sessionReady) {
+        console.log('ForgeAuth.getSession: Waiting for INITIAL_SESSION...');
+        await sessionReadyPromise;
+      }
+
       const client = getClient();
       const { data, error } = await client.auth.getSession();
-      
+
       if (error) {
         console.error('ForgeAuth.getSession: Error fetching session', error);
         return null;
       }
-      
+
       return data.session;
     } catch (error) {
       console.error('ForgeAuth.getSession: Exception', error);
